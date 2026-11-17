@@ -90,10 +90,3 @@ sudo systemctl start icy.service
 You can monitor the server logs using `journalctl -u icy.service`. Use
 `-f` to _tail_ and follow the logs as they get written.
 
-***
-
-Part of [Charm](https://charm.sh).
-
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
-
-Charm热爱开源 • Charm loves open source
