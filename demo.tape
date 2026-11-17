@@ -5,7 +5,7 @@ Set FontSize 22
 Output icy.gif
 Output icy-frames/
 
-Type "ssh git.charm.sh"
+Type "ssh -p 23231 localhost"
 Sleep 1s
 Enter
 Sleep 2s
