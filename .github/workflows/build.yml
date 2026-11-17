@@ -45,9 +45,27 @@ jobs:
         run: go test ./...
 
   snapshot:
-    uses: charmbracelet/meta/.github/workflows/snapshot.yml@main
-    secrets:
-      goreleaser_key: ${{ secrets.GORELEASER_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean --snapshot
+      - uses: actions/upload-artifact@v7
+        with:
+          retention-days: 7
+          name: dist
+          path: dist
 
   test_postgres:
     services:
