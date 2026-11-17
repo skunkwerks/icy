@@ -13,9 +13,9 @@ const (
 	// VisibilityPublic repositories are listed, and anyone allowed by the
 	// server's anon-access setting can read them.
 	VisibilityPublic Visibility = "public"
-	// VisibilityUnlisted repositories are readable like public ones, but
-	// are left out of every listing. Anyone who knows the name can read
-	// them.
+	// VisibilityUnlisted repositories are readable like public ones. They
+	// are listed only for signed in callers, see Listed. Anyone who knows
+	// the name can read them.
 	VisibilityUnlisted Visibility = "unlisted"
 	// VisibilityPrivate repositories are readable only by their owner,
 	// collaborators and admins. Everyone else gets the same answer as for
@@ -70,4 +70,13 @@ func VisibilityFromFlags(private, hidden bool) Visibility {
 // VisibilityOf returns the visibility of r.
 func VisibilityOf(r Repository) Visibility {
 	return VisibilityFromFlags(r.IsPrivate(), r.IsHidden())
+}
+
+// Listed reports whether a repository with visibility v appears in
+// listings for a caller who can already read it. Every listing uses this
+// one rule: the web front page, `repo list` over ssh and the TUI. Unlisted
+// repositories are listed only for signed in callers, so an anonymous
+// caller must know the name. Read access is checked separately.
+func (v Visibility) Listed(signedIn bool) bool {
+	return v != VisibilityUnlisted || signedIn
 }

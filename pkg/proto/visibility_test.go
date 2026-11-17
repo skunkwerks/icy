@@ -20,3 +20,25 @@ func TestVisibilityRoundTrip(t *testing.T) {
 		t.Errorf("private and hidden = %q", v)
 	}
 }
+
+func TestVisibilityListed(t *testing.T) {
+	cases := []struct {
+		vis      Visibility
+		signedIn bool
+		want     bool
+	}{
+		{VisibilityPublic, false, true},
+		{VisibilityPublic, true, true},
+		{VisibilityUnlisted, false, false},
+		{VisibilityUnlisted, true, true},
+		// Read access decides who sees a private repository at all.
+		// Once a caller can read it, it is listed.
+		{VisibilityPrivate, false, true},
+		{VisibilityPrivate, true, true},
+	}
+	for _, c := range cases {
+		if got := c.vis.Listed(c.signedIn); got != c.want {
+			t.Errorf("%s.Listed(%t) = %t, want %t", c.vis, c.signedIn, got, c.want)
+		}
+	}
+}
