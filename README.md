@@ -1165,14 +1165,27 @@ needs no JavaScript and follows the browser's light or dark theme.
 - `/` shows the server name, owner and description, and the public
   repositories.
 - `/<repo>` shows the README, the latest commits and the clone URLs.
-- `/<repo>/~/tree`, `/~/log` and `/~/refs` browse files, history, branches and
-  tags. Add `?h=<branch, tag or commit>` to look at another revision.
-- `/<repo>/~/blob/<path>` shows a file with syntax highlighting.
-  `/<repo>/~/raw/<path>` downloads it.
-- `/<repo>/~/commit/<id>` shows one commit and its diff.
+- `/<repo>/tree/<path>`, `/<repo>/log` and `/<repo>/refs` browse files,
+  history, branches and tags. Add `?h=<branch, tag or commit>` to look at
+  another revision.
+- `/<repo>/blob/<path>` shows a file with syntax highlighting.
+  `/<repo>/raw/<path>` downloads it.
+- `/<repo>/commit/<id>` shows one commit and its diff.
+- `/-/` holds the server's own pages, such as sign-in.
 
-No repository name can contain `~`, so these paths never clash with git, LFS
-or `go get`.
+### Reserved names
+
+The words `tree`, `blob`, `raw`, `log`, `commit`, `refs` and `-` cannot be a
+segment of a new repository name, in any letter case. So `org/tree` and
+`docs/Log` are refused, but `org/trees` and `changelog` are fine. This is what
+lets a URL say where the repository name ends.
+
+A repository created before this rule keeps working over SSH, git over HTTP
+and in the TUI. The web UI does not show it, and the server logs a warning
+for it at startup. Rename it to show it in the web UI.
+
+Git requests win over web pages. A file whose path ends like a git request,
+such as `HEAD` or `info/refs`, cannot be shown in the web UI.
 
 Set `web.owner` and `web.description` in `config.yaml` to fill in the front
 page. Set `web.enabled: false`, or `ICY_WEB_ENABLED=false`, to turn the web UI
