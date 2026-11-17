@@ -1,12 +1,12 @@
 FROM alpine:latest
 
 # Create directories
-WORKDIR /soft-serve
+WORKDIR /icy
 # Expose data volume
-VOLUME /soft-serve
+VOLUME /icy
 
 # Environment variables
-ENV ICY_DATA_PATH "/soft-serve"
+ENV ICY_DATA_PATH "/icy"
 ENV ICY_INITIAL_ADMIN_KEYS ""
 # workaround to prevent slowness in docker when running with a tty
 ENV CI "1"
