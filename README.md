@@ -1,12 +1,8 @@
-# Sunsetting Icy
-
-To continue innovating in this space and supporting our most important work, we’ve sunset Icy. The code will continue to be open source and publicly available. No further security updates will be applied. If you love this project and would like to maintain a fork, please do.
-
-Thank you to everyone who has supported and contributed to Icy over the years. We appreciate you.
-
-***
-
 # Icy
+
+Icy is a fork of [Soft Serve](https://github.com/charmbracelet/soft-serve).
+Charm has sunset Soft Serve. Thank you to Charm and to everyone who
+contributed to it over the years.
 
 <p>
     <img style="width: 451px" src="https://stuff.charm.sh/icy/icy-header.png?0" alt="A nice rendering of some melting ice cream with the words ‘Charm Icy’ next to it"><br>
