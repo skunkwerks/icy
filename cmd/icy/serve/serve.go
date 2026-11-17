@@ -70,6 +70,12 @@ var (
 				return fmt.Errorf("migration error: %w", err)
 			}
 
+			// The key that seals webhook bearer tokens. It is made on
+			// first start and never stored in the database.
+			if err := backend.FromContext(ctx).EnsureSecretsKey(ctx); err != nil {
+				return fmt.Errorf("secrets key: %w", err)
+			}
+
 			// The backend holds the config from the context, so the
 			// flag has to land there.
 			if err := config.FromContext(ctx).SetStateSource(stateSource); err != nil {
