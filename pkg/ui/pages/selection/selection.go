@@ -10,6 +10,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/skunkwerks/icy/pkg/access"
 	"github.com/skunkwerks/icy/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/proto"
 	"github.com/skunkwerks/icy/pkg/ui/common"
 	"github.com/skunkwerks/icy/pkg/ui/components/code"
 	"github.com/skunkwerks/icy/pkg/ui/components/selector"
@@ -195,6 +196,16 @@ func (s *Selection) Init() tea.Cmd {
 		return nil
 	}
 
+	// Signed in means the key belongs to a registered user. Listing
+	// follows proto.Visibility.Listed, the same rule as the web front page
+	// and `repo list`.
+	signedIn := proto.UserFromContext(ctx) != nil
+	if !signedIn && pk != nil {
+		if u, err := be.UserByPublicKey(ctx, pk); err == nil && u != nil {
+			signedIn = true
+		}
+	}
+
 	repos, err := be.Repositories(ctx)
 	if err != nil {
 		return common.ErrorCmd(err)
@@ -210,10 +221,10 @@ func (s *Selection) Init() tea.Cmd {
 			readmeCmd = s.readme.SetContent(readme, path)
 		}
 
-		if r.IsHidden() {
+		al := be.AccessLevelByPublicKey(ctx, r.Name(), pk)
+		if !proto.VisibilityOf(r).Listed(signedIn || al >= access.AdminAccess) {
 			continue
 		}
-		al := be.AccessLevelByPublicKey(ctx, r.Name(), pk)
 		if al >= access.ReadOnlyAccess {
 			item, err := NewItem(s.common, r)
 			if err != nil {
