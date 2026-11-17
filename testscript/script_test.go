@@ -59,6 +59,8 @@ func TestMain(m *testing.M) {
 
 	// Build the icy binary with -cover flag.
 	cmd := PrepareBuildCommand(binPath)
+	cmd.Stdout = os.Stderr
+	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to build icy binary: %s", err)
 		os.Exit(1)
