@@ -5,6 +5,11 @@ ARG FREEBSD=15.1
 
 FROM ghcr.io/freebsd/freebsd-notoolchain:${FREEBSD} AS builder
 
+# Embed the git version the image was built from
+ARG GIT_VERSION
+RUN test -n "${GIT_VERSION}" || \
+	{ echo "GIT_VERSION is not set: use make oci, or pass --build-arg GIT_VERSION=..." >&2; exit 1; }
+
 ENV ASSUME_ALWAYS_YES=yes
 ENV IGNORE_OSVERSION=yes
 ENV HOME=/root
@@ -28,7 +33,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
-ARG GIT_VERSION=0.0.0
 ARG GIT_COMMIT=unknown
 ARG BUILD_DATE=unknown
 
@@ -55,7 +59,7 @@ RUN pkg upgrade -qy
 # not part of the image anyway.
 RUN pkg install -qy devel/git@tiny security/ca_root_nss shells/bash
 
-ARG GIT_VERSION=0.0.0
+ARG GIT_VERSION
 ARG GIT_COMMIT=unknown
 ARG BUILD_DATE=unknown
 

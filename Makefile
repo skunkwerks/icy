@@ -17,8 +17,19 @@ REGISTRY?=	cr.skunkwerks.at
 PODMAN?=	podman
 GIT?=		git
 
-VERSION!=	${GIT} describe --dirty --abbrev=7 --tags --always --first-parent
-COMMIT!=	${GIT} rev-parse --short HEAD
+# git describe gives v1.2.3-4-gabc1234, written here as v1.2.3.4-abc1234
+VERSION!=	${GIT} describe --dirty --abbrev=7 --tags --always --first-parent 2>/dev/null | \
+		sed -E 's/-([0-9]+)-g([0-9a-f]+)/.\1-\2/' || true
+COMMIT!=	${GIT} rev-parse --short HEAD 2>/dev/null || true
+
+# Every image carries the git version it was built from, and the web UI
+# shows it. Outside a git checkout, pass it in: make VERSION=v1.2.3 oci
+.if empty(VERSION)
+.error no git version: build from a git checkout, or pass VERSION=... on the command line
+.endif
+.if empty(COMMIT)
+COMMIT=		unknown
+.endif
 
 .PHONY: cache clean-tree oci oci-archive oci-push
 
