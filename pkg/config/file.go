@@ -166,6 +166,15 @@ lfs:
   # Enable Git SSH transfer.
   ssh_enabled: {{ .LFS.SSHEnabled }}
 
+# The read-only web UI, served by the HTTP server.
+web:
+  # Enable the web UI.
+  enabled: {{ .Web.Enabled }}
+  # Who runs this server, shown on the front page.
+  owner: "{{ .Web.Owner }}"
+  # A short description, shown on the front page.
+  description: "{{ .Web.Description }}"
+
 # Cron job configuration
 jobs:
   mirror_pull: "{{ .Jobs.MirrorPull }}"

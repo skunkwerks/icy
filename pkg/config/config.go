@@ -200,6 +200,9 @@ type Config struct {
 	// Jobs is the configuration for cron jobs
 	Jobs JobsConfig `envPrefix:"JOBS_" yaml:"jobs"`
 
+	// Web is the configuration for the web UI.
+	Web WebConfig `envPrefix:"WEB_" yaml:"web"`
+
 	// InitialAdminKeys is a list of public keys that will be added to the list of admins.
 	InitialAdminKeys []string `env:"INITIAL_ADMIN_KEYS" envSeparator:"\n" yaml:"initial_admin_keys"`
 
@@ -278,6 +281,9 @@ func (c *Config) Environ() []string {
 		fmt.Sprintf("ICY_LFS_ENABLED=%t", c.LFS.Enabled),
 		fmt.Sprintf("ICY_LFS_SSH_ENABLED=%t", c.LFS.SSHEnabled),
 		fmt.Sprintf("ICY_JOBS_MIRROR_PULL=%s", c.Jobs.MirrorPull),
+		fmt.Sprintf("ICY_WEB_ENABLED=%t", c.Web.Enabled),
+		fmt.Sprintf("ICY_WEB_OWNER=%s", c.Web.Owner),
+		fmt.Sprintf("ICY_WEB_DESCRIPTION=%s", c.Web.Description),
 	}...)
 
 	// AnonAccess and AllowKeyless are tri-state overrides: only emit them
@@ -466,6 +472,9 @@ func DefaultConfig() *Config {
 		},
 		Jobs: JobsConfig{
 			MirrorPull: "@every 10m",
+		},
+		Web: WebConfig{
+			Enabled: true,
 		},
 	}
 }
