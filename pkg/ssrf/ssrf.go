@@ -29,6 +29,14 @@ var (
 // validation and connection). Redirects are disabled to match the webhook
 // client convention and prevent redirect-based SSRF.
 func NewSecureClient() *http.Client {
+	return NewSecureClientWithAllowlist(nil)
+}
+
+// NewSecureClientWithAllowlist is NewSecureClient, except that addresses in
+// allow may be dialled even though they fall inside a blocked range. The
+// check is made on the address that is dialled, after any name lookup, so
+// the allowlist cannot be widened through DNS.
+func NewSecureClientWithAllowlist(allow AllowedNetworks) *http.Client {
 	return &http.Client{
 		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
@@ -52,7 +60,7 @@ func NewSecureClient() *http.Client {
 					}
 					ip = ips[0] // Use the first resolved IP address
 				}
-				if isPrivateOrInternal(ip) {
+				if allow.blocked(ip) {
 					return nil, fmt.Errorf("%w", ErrPrivateIP)
 				}
 
@@ -148,6 +156,14 @@ func isPrivateOrInternal(ip net.IP) bool {
 // It checks that the scheme is http/https, the hostname is not localhost,
 // and all resolved IPs are public.
 func ValidateURL(rawURL string) error {
+	return ValidateURLWithAllowlist(rawURL, nil)
+}
+
+// ValidateURLWithAllowlist is ValidateURL, except that addresses in allow
+// are accepted even though they fall inside a blocked range. A hostname
+// passes only if every address it resolves to is public or allowed. Names
+// such as "localhost" are still refused: list the address instead.
+func ValidateURLWithAllowlist(rawURL string, allow AllowedNetworks) error {
 	if rawURL == "" {
 		return ErrInvalidURL
 	}
@@ -171,7 +187,7 @@ func ValidateURL(rawURL string) error {
 	}
 
 	if ip := net.ParseIP(hostname); ip != nil {
-		if isPrivateOrInternal(ip) {
+		if allow.blocked(ip) {
 			return ErrPrivateIP
 		}
 		return nil
@@ -184,7 +200,7 @@ func ValidateURL(rawURL string) error {
 	}
 
 	if slices.ContainsFunc(ips, func(addr net.IPAddr) bool {
-		return isPrivateOrInternal(addr.IP)
+		return allow.blocked(addr.IP)
 	}) {
 		return ErrPrivateIP
 	}
