@@ -17,6 +17,10 @@ import (
 //
 // It implements backend.Backend.
 func (d *Backend) AddCollaborator(ctx context.Context, repo string, username string, level access.AccessLevel) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	username = strings.ToLower(username)
 	if err := utils.ValidateUsername(username); err != nil {
 		return err
@@ -101,6 +105,10 @@ func (d *Backend) IsCollaborator(ctx context.Context, repo string, username stri
 //
 // It implements backend.Backend.
 func (d *Backend) RemoveCollaborator(ctx context.Context, repo string, username string) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	repo = utils.SanitizeRepo(repo)
 	r, err := d.Repository(ctx, repo)
 	if err != nil {

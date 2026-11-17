@@ -66,6 +66,10 @@ func redactRemote(remote string) string {
 //
 // It implements backend.Backend.
 func (d *Backend) CreateRepository(ctx context.Context, name string, user proto.User, opts proto.RepositoryOptions) (proto.Repository, error) {
+	if err := d.checkStateWritable(); err != nil {
+		return nil, err
+	}
+
 	name = utils.SanitizeRepo(name)
 	if err := utils.ValidateRepo(name); err != nil {
 		return nil, err
@@ -194,6 +198,10 @@ func (d *Backend) defaultAdminUserID(ctx context.Context, tx *db.Tx) (int64, err
 
 // ImportRepository imports a repository from remote.
 func (d *Backend) ImportRepository(_ context.Context, name string, user proto.User, remote string, opts proto.RepositoryOptions) (proto.Repository, error) {
+	if err := d.checkStateWritable(); err != nil {
+		return nil, err
+	}
+
 	name = utils.SanitizeRepo(name)
 	if err := utils.ValidateRepo(name); err != nil {
 		return nil, err
@@ -356,6 +364,10 @@ func (d *Backend) importRepository(ctx context.Context, user proto.User, imp imp
 //
 // It implements backend.Backend.
 func (d *Backend) DeleteRepository(ctx context.Context, name string) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	name = utils.SanitizeRepo(name)
 	rp := d.repoPath(name)
 
@@ -427,6 +439,10 @@ func (d *Backend) DeleteRepository(ctx context.Context, name string) error {
 //
 // It implements backend.Backend.
 func (d *Backend) RenameRepository(ctx context.Context, oldName string, newName string) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	oldName = utils.SanitizeRepo(oldName)
 	if err := utils.ValidateRepo(oldName); err != nil {
 		return err
@@ -651,6 +667,10 @@ func (d *Backend) ProjectName(ctx context.Context, name string) (string, error) 
 //
 // It implements backend.Backend.
 func (d *Backend) SetHidden(ctx context.Context, name string, hidden bool) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	name = utils.SanitizeRepo(name)
 
 	// An UPDATE that matches no row succeeds silently, so look the
@@ -733,6 +753,10 @@ func (d *Backend) SetMirror(ctx context.Context, name string, mirror bool) error
 //
 // It implements backend.Backend.
 func (d *Backend) SetDescription(ctx context.Context, name string, desc string) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	name = utils.SanitizeRepo(name)
 	desc = utils.Sanitize(desc)
 	rp := d.repoPath(name)
@@ -757,6 +781,10 @@ func (d *Backend) SetDescription(ctx context.Context, name string, desc string) 
 //
 // It implements backend.Backend.
 func (d *Backend) SetPrivate(ctx context.Context, name string, private bool) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	name = utils.SanitizeRepo(name)
 	rp := d.repoPath(name)
 
@@ -811,6 +839,10 @@ func (d *Backend) SetPrivate(ctx context.Context, name string, private bool) err
 //
 // It implements backend.Backend.
 func (d *Backend) SetProjectName(ctx context.Context, repo string, name string) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	repo = utils.SanitizeRepo(repo)
 	name = utils.Sanitize(name)
 

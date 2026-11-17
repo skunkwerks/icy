@@ -36,6 +36,9 @@ var (
 	ErrCollaboratorNotFound = errors.New("collaborator not found")
 	// ErrCollaboratorExist is returned when a collaborator already exists.
 	ErrCollaboratorExist = errors.New("collaborator already exists")
+	// ErrManagedByConfig is returned when a change is asked for that the
+	// server's config.yaml controls (state_source: config).
+	ErrManagedByConfig = errors.New("users, repositories and access on this server come from its config.yaml: change the file and reload the server instead")
 	// ErrExceedsAccessLevel is returned when an action would grant or revoke
 	// access above the caller's own access level.
 	ErrExceedsAccessLevel = errors.New("cannot change access above your own access level")

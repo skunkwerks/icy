@@ -320,6 +320,10 @@ func (d *Backend) Users(ctx context.Context) ([]string, error) {
 //
 // It implements backend.Backend.
 func (d *Backend) AddPublicKey(ctx context.Context, username string, pk ssh.PublicKey) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	username = strings.ToLower(username)
 	if err := utils.ValidateUsername(username); err != nil {
 		return err
@@ -336,6 +340,10 @@ func (d *Backend) AddPublicKey(ctx context.Context, username string, pk ssh.Publ
 //
 // It implements backend.Backend.
 func (d *Backend) CreateUser(ctx context.Context, username string, opts proto.UserOptions) (proto.User, error) {
+	if err := d.checkStateWritable(); err != nil {
+		return nil, err
+	}
+
 	username = utils.Sanitize(username)
 	username = strings.ToLower(username)
 	if err := utils.ValidateUsername(username); err != nil {
@@ -355,6 +363,10 @@ func (d *Backend) CreateUser(ctx context.Context, username string, opts proto.Us
 //
 // It implements backend.Backend.
 func (d *Backend) DeleteUser(ctx context.Context, username string) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	username = strings.ToLower(username)
 	if err := utils.ValidateUsername(username); err != nil {
 		return err
@@ -393,6 +405,10 @@ func (d *Backend) DeleteUser(ctx context.Context, username string) error {
 //
 // It implements backend.Backend.
 func (d *Backend) RemovePublicKey(ctx context.Context, username string, pk ssh.PublicKey) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	return db.WrapError(
 		d.db.TransactionContext(ctx, func(tx *db.Tx) error {
 			return d.store.RemovePublicKeyByUsername(ctx, tx, username, pk)
@@ -423,6 +439,10 @@ func (d *Backend) ListPublicKeys(ctx context.Context, username string) ([]ssh.Pu
 //
 // It implements backend.Backend.
 func (d *Backend) SetUsername(ctx context.Context, username string, newUsername string) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	username = strings.ToLower(username)
 	if err := utils.ValidateUsername(username); err != nil {
 		return err
@@ -439,6 +459,10 @@ func (d *Backend) SetUsername(ctx context.Context, username string, newUsername 
 //
 // It implements backend.Backend.
 func (d *Backend) SetAdmin(ctx context.Context, username string, admin bool) error {
+	if err := d.checkStateWritable(); err != nil {
+		return err
+	}
+
 	username = strings.ToLower(username)
 	if err := utils.ValidateUsername(username); err != nil {
 		return err
