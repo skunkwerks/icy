@@ -849,8 +849,9 @@ repository. Repo admins manage them with the `repo webhook` command. Use
 ssh -p 23231 localhost repo webhook create icy https://ci.example.com/hook \
   -e push -e branch_tag_create --secret 's3cret'
 
-# List webhooks and their IDs
+# List webhooks and their IDs, or show one in full
 ssh -p 23231 localhost repo webhook list icy
+ssh -p 23231 localhost repo webhook info icy 1
 
 # Change the URL or events of webhook 1, or switch it off
 ssh -p 23231 localhost repo webhook update icy 1 --url https://ci2.example.com/hook
@@ -925,6 +926,7 @@ A trimmed push payload looks like this:
 | `X-Icy-Event`     | the event name, such as `push`                              |
 | `X-Icy-Delivery`  | a UUID for this delivery. Retries send the same UUID.       |
 | `X-Icy-Signature` | `sha256=` and the hex HMAC of the body. Sent only with a secret. |
+| `Authorization`   | `Bearer <token>`. Sent only when the webhook has a bearer token. |
 
 A receiver can drop a delivery whose `X-Icy-Delivery` it has seen before.
 This stops a retry from starting a second build.
@@ -978,6 +980,11 @@ attempt times out after 30 seconds. After a failure Icy waits and tries
 again, and the wait doubles each time. With the defaults it tries five
 times, waiting 2, 4, 8, and 16 minutes, so it gives up about 30 minutes
 after the push. One failing webhook does not delay the others.
+
+A `401` or `403` answer is not retried. It means the receiver refused the
+credentials, and sending them again will not help. Icy logs the attempt
+and drops the delivery at once. Fix the token or the secret, then use
+`redeliver`.
 
 The queue lives in the database, so deliveries survive a restart of the
 server. A delivery that was in flight when the server stopped is sent again
@@ -1039,6 +1046,101 @@ the check cannot send the request somewhere else. Names such as
 `localhost` are always refused, so write `http://127.0.0.1:8080/` if the
 receiver is on the same host. Keep the list as small as you can. Every
 repo admin can send requests to anything in it.
+
+#### Bearer tokens
+
+A webhook can send a token in an `Authorization: Bearer <token>` header.
+Use this for services that want an API token rather than a signature,
+such as Buildkite.
+
+Only server admins can set or remove a token. Repo admins can still
+create, change and delete webhooks, but they cannot touch the token, and
+they cannot change the URL of a webhook that has one. Icy reads the token
+from stdin, so it never shows up in the command line, your shell history
+or the server logs:
+
+```sh
+# Add a token to webhook 1
+printf '%s' "$CI_TOKEN" | ssh -p 23231 localhost repo webhook update icy 1 --bearer-stdin
+
+# Or create a webhook with a token
+ssh -p 23231 localhost repo webhook create icy https://ci.example.com/hook \
+  -e push --bearer-stdin < ci-token.txt
+
+# Remove the token
+ssh -p 23231 localhost repo webhook update icy 1 --no-bearer
+```
+
+A webhook with a token must use `https`. The only exception is a URL
+whose address is in `webhook.allowed_networks`, such as a CI server on
+your LAN. Icy checks this when the token is set and when the URL changes.
+Icy never follows redirects, so a token is never sent anywhere but the
+URL you gave.
+
+`repo webhook list` and `repo webhook info` show `bearer (set)` when a
+webhook has a token. They never show the token. The delivery log shows
+`Authorization: Bearer [REDACTED]`.
+
+Icy encrypts tokens with AES-256-GCM before it stores them. The key is in
+`secrets.key` in the data directory. Icy makes it the first time it
+starts, with mode `0600`. The key is never stored in the database, so a
+copy of the database alone does not reveal the tokens.
+
+Back up `secrets.key` together with the database. If you restore the
+database without it, Icy will not start while webhooks have tokens. It
+also never sends a webhook without its token. Restore the key, or clear
+the tokens with `--no-bearer` and set them again.
+
+To change the key, stop Icy and run:
+
+```sh
+icy admin rotate-secrets-key
+```
+
+This encrypts every token again with a new key, in one transaction, and
+then replaces `secrets.key`.
+
+#### Example: Buildkite
+
+With `--format buildkite`, Icy sends the body that the Buildkite
+[create a build](https://buildkite.com/docs/apis/rest-api/builds#create-a-build)
+API expects. Point the webhook at the pipeline's builds URL and give it an
+API access token with the `write_builds` scope:
+
+```sh
+printf '%s' "$BUILDKITE_TOKEN" | ssh -p 23231 localhost repo webhook create app \
+  https://api.buildkite.com/v2/organizations/acme/pipelines/app/builds \
+  -e push --format buildkite --bearer-stdin
+```
+
+Each push to a branch then starts a build with a body like this:
+
+```json
+{
+  "commit": "9a8e47d2…",
+  "branch": "main",
+  "message": "Fix the build",
+  "author": { "name": "Frankie", "email": "frankie@example.com" },
+  "meta_data": { "icy_delivery": "6f1c2d3e-…", "icy_repo": "app" }
+}
+```
+
+`message` and `author` come from the newest pushed commit. `icy_delivery`
+is the `X-Icy-Delivery` UUID, so you can match a build to its delivery.
+
+A tag push starts a build of the tag. Icy puts the tag name in `branch`,
+which is how the Buildkite API builds a tag, and sets `commit` to the
+commit the tag points to, also for annotated tags. It adds the tag name
+to the build meta-data, so a step can tell a tag build apart:
+
+```sh
+TAG=$(buildkite-agent meta-data get icy_tag --default '')
+```
+
+The buildkite format works with the `push` event only, and is always sent
+as JSON. Icy sends nothing for a deleted branch or tag, or for refs that
+are neither branches nor tags. Buildkite answers `201 Created`, which
+counts as success like any other `2xx`.
 
 #### Example: build on push
 
