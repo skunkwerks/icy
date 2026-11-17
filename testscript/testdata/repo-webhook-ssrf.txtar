@@ -27,12 +27,11 @@ stderr 'Created repository test-repo.*'
 ! icy repo webhook create test-repo http://10.0.0.1/webhook -e push
 
 # Create webhook with valid public IP - should succeed
-new-webhook WH_PUBLIC
-icy repo webhook create test-repo $WH_PUBLIC -e push
+icy repo webhook create test-repo https://example.com/webhook -e push
 
 # List webhooks - should show only the valid one
 icy repo webhook list test-repo
-stdout 'webhook.site'
+stdout 'example.com'
 
 # Try to update webhook to localhost - should fail
 ! icy repo webhook update test-repo 1 --url http://localhost:9090/hook
