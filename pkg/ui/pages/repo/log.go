@@ -10,14 +10,14 @@ import (
 	tea "charm.land/bubbletea/v2"
 	gansi "charm.land/glamour/v2/ansi"
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/soft-serve/git"
-	"github.com/charmbracelet/soft-serve/pkg/proto"
-	"github.com/charmbracelet/soft-serve/pkg/ui/common"
-	"github.com/charmbracelet/soft-serve/pkg/ui/components/footer"
-	"github.com/charmbracelet/soft-serve/pkg/ui/components/selector"
-	"github.com/charmbracelet/soft-serve/pkg/ui/components/viewport"
-	"github.com/charmbracelet/soft-serve/pkg/ui/styles"
 	"github.com/muesli/reflow/wrap"
+	"github.com/skunkwerks/icy/git"
+	"github.com/skunkwerks/icy/pkg/proto"
+	"github.com/skunkwerks/icy/pkg/ui/common"
+	"github.com/skunkwerks/icy/pkg/ui/components/footer"
+	"github.com/skunkwerks/icy/pkg/ui/components/selector"
+	"github.com/skunkwerks/icy/pkg/ui/components/viewport"
+	"github.com/skunkwerks/icy/pkg/ui/styles"
 )
 
 var waitBeforeLoading = time.Millisecond * 100

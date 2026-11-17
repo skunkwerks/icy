@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/charmbracelet/soft-serve/pkg/access"
-	"github.com/charmbracelet/soft-serve/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/access"
+	"github.com/skunkwerks/icy/pkg/backend"
 	"github.com/spf13/cobra"
 )
 

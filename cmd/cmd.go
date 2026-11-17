@@ -7,12 +7,12 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/charmbracelet/soft-serve/pkg/backend"
-	"github.com/charmbracelet/soft-serve/pkg/config"
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/hooks"
-	"github.com/charmbracelet/soft-serve/pkg/store"
-	"github.com/charmbracelet/soft-serve/pkg/store/database"
+	"github.com/skunkwerks/icy/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/config"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/hooks"
+	"github.com/skunkwerks/icy/pkg/store"
+	"github.com/skunkwerks/icy/pkg/store/database"
 	"github.com/spf13/cobra"
 )
 

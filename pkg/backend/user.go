@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/soft-serve/pkg/access"
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/models"
-	"github.com/charmbracelet/soft-serve/pkg/proto"
-	"github.com/charmbracelet/soft-serve/pkg/sshutils"
-	"github.com/charmbracelet/soft-serve/pkg/utils"
+	"github.com/skunkwerks/icy/pkg/access"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/models"
+	"github.com/skunkwerks/icy/pkg/proto"
+	"github.com/skunkwerks/icy/pkg/sshutils"
+	"github.com/skunkwerks/icy/pkg/utils"
 	"golang.org/x/crypto/ssh"
 )
 

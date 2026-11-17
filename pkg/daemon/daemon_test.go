@@ -10,16 +10,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/soft-serve/pkg/backend"
-	"github.com/charmbracelet/soft-serve/pkg/config"
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/migrate"
-	"github.com/charmbracelet/soft-serve/pkg/git"
-	"github.com/charmbracelet/soft-serve/pkg/proto"
-	"github.com/charmbracelet/soft-serve/pkg/store"
-	"github.com/charmbracelet/soft-serve/pkg/store/database"
-	"github.com/charmbracelet/soft-serve/pkg/test"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/skunkwerks/icy/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/config"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/migrate"
+	"github.com/skunkwerks/icy/pkg/git"
+	"github.com/skunkwerks/icy/pkg/proto"
+	"github.com/skunkwerks/icy/pkg/store"
+	"github.com/skunkwerks/icy/pkg/store/database"
+	"github.com/skunkwerks/icy/pkg/test"
 	_ "modernc.org/sqlite" // sqlite driver
 )
 

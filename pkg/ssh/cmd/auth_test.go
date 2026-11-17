@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/charmbracelet/soft-serve/pkg/access"
-	"github.com/charmbracelet/soft-serve/pkg/proto"
 	"github.com/matryer/is"
+	"github.com/skunkwerks/icy/pkg/access"
+	"github.com/skunkwerks/icy/pkg/proto"
 )
 
 // TestGlobalCommandsIgnoreRepositoryAccess is the regression test for the

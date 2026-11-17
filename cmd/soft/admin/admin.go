@@ -3,11 +3,11 @@ package admin
 import (
 	"fmt"
 
-	"github.com/charmbracelet/soft-serve/cmd"
-	"github.com/charmbracelet/soft-serve/pkg/backend"
-	"github.com/charmbracelet/soft-serve/pkg/config"
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/migrate"
+	"github.com/skunkwerks/icy/cmd"
+	"github.com/skunkwerks/icy/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/config"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/migrate"
 	"github.com/spf13/cobra"
 )
 

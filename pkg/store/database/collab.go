@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/charmbracelet/soft-serve/pkg/access"
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/models"
-	"github.com/charmbracelet/soft-serve/pkg/store"
-	"github.com/charmbracelet/soft-serve/pkg/utils"
+	"github.com/skunkwerks/icy/pkg/access"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/models"
+	"github.com/skunkwerks/icy/pkg/store"
+	"github.com/skunkwerks/icy/pkg/utils"
 )
 
 type collabStore struct{}

@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/models"
-	"github.com/charmbracelet/soft-serve/pkg/sshutils"
-	"github.com/charmbracelet/soft-serve/pkg/store"
-	"github.com/charmbracelet/soft-serve/pkg/utils"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/models"
+	"github.com/skunkwerks/icy/pkg/sshutils"
+	"github.com/skunkwerks/icy/pkg/store"
+	"github.com/skunkwerks/icy/pkg/utils"
 	"golang.org/x/crypto/ssh"
 )
 

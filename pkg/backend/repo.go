@@ -14,17 +14,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/soft-serve/git"
-	"github.com/charmbracelet/soft-serve/pkg/config"
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/models"
-	"github.com/charmbracelet/soft-serve/pkg/hooks"
-	"github.com/charmbracelet/soft-serve/pkg/lfs"
-	"github.com/charmbracelet/soft-serve/pkg/proto"
-	"github.com/charmbracelet/soft-serve/pkg/ssrf"
-	"github.com/charmbracelet/soft-serve/pkg/storage"
-	"github.com/charmbracelet/soft-serve/pkg/utils"
-	"github.com/charmbracelet/soft-serve/pkg/webhook"
+	"github.com/skunkwerks/icy/git"
+	"github.com/skunkwerks/icy/pkg/config"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/models"
+	"github.com/skunkwerks/icy/pkg/hooks"
+	"github.com/skunkwerks/icy/pkg/lfs"
+	"github.com/skunkwerks/icy/pkg/proto"
+	"github.com/skunkwerks/icy/pkg/ssrf"
+	"github.com/skunkwerks/icy/pkg/storage"
+	"github.com/skunkwerks/icy/pkg/utils"
+	"github.com/skunkwerks/icy/pkg/webhook"
 )
 
 // RemotePolicy returns the policy for git remotes supplied on behalf of user:

@@ -7,12 +7,12 @@ import (
 	"charm.land/log/v2"
 	"charm.land/ssh"
 	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/charmbracelet/soft-serve/git"
-	"github.com/charmbracelet/soft-serve/pkg/backend"
-	"github.com/charmbracelet/soft-serve/pkg/config"
-	"github.com/charmbracelet/soft-serve/pkg/ui/keymap"
-	"github.com/charmbracelet/soft-serve/pkg/ui/styles"
 	zone "github.com/lrstanley/bubblezone/v2"
+	"github.com/skunkwerks/icy/git"
+	"github.com/skunkwerks/icy/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/config"
+	"github.com/skunkwerks/icy/pkg/ui/keymap"
+	"github.com/skunkwerks/icy/pkg/ui/styles"
 )
 
 type contextKey struct {

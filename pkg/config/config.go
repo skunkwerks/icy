@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/charmbracelet/soft-serve/pkg/access"
-	"github.com/charmbracelet/soft-serve/pkg/sshutils"
-	"github.com/charmbracelet/soft-serve/pkg/ssrf"
+	"github.com/skunkwerks/icy/pkg/access"
+	"github.com/skunkwerks/icy/pkg/sshutils"
+	"github.com/skunkwerks/icy/pkg/ssrf"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
 )

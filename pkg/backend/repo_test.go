@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/soft-serve/git"
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/proto"
-	"github.com/charmbracelet/soft-serve/pkg/ssrf"
 	"github.com/matryer/is"
+	"github.com/skunkwerks/icy/git"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/proto"
+	"github.com/skunkwerks/icy/pkg/ssrf"
 )
 
 // TestCreateRepositoryAnonymousOwner verifies that a repository created with

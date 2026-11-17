@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/charmbracelet/soft-serve/pkg/access"
 	"github.com/matryer/is"
+	"github.com/skunkwerks/icy/pkg/access"
 )
 
 func TestParseMultipleKeys(t *testing.T) {

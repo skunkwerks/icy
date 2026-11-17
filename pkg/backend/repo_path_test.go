@@ -8,10 +8,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/charmbracelet/soft-serve/git"
-	"github.com/charmbracelet/soft-serve/pkg/access"
-	"github.com/charmbracelet/soft-serve/pkg/proto"
 	"github.com/matryer/is"
+	"github.com/skunkwerks/icy/git"
+	"github.com/skunkwerks/icy/pkg/access"
+	"github.com/skunkwerks/icy/pkg/proto"
 )
 
 // TestOrphanRepoDirectoryIsNotClaimable verifies that a repository directory

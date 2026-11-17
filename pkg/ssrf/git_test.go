@@ -130,7 +130,7 @@ func TestValidateGitRemoteResolvesHostnames(t *testing.T) {
 		t.Skip("requires DNS")
 	}
 
-	v, err := ValidateGitRemote("https://github.com/charmbracelet/soft-serve.git", anySSH)
+	v, err := ValidateGitRemote("https://github.com/skunkwerks/icy.git", anySSH)
 	if err != nil {
 		t.Fatalf("public hostname rejected: %v", err)
 	}

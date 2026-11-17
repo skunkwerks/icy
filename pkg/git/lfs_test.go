@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/git-lfs-transfer/transfer"
-	"github.com/charmbracelet/soft-serve/pkg/lfs"
+	"github.com/skunkwerks/icy/pkg/lfs"
 )
 
 // Object IDs arrive raw off the pktline stream. They must be rejected before

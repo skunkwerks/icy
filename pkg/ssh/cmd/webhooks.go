@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2/table"
-	"github.com/charmbracelet/soft-serve/pkg/access"
-	"github.com/charmbracelet/soft-serve/pkg/backend"
-	"github.com/charmbracelet/soft-serve/pkg/utils"
-	"github.com/charmbracelet/soft-serve/pkg/webhook"
 	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
+	"github.com/skunkwerks/icy/pkg/access"
+	"github.com/skunkwerks/icy/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/utils"
+	"github.com/skunkwerks/icy/pkg/webhook"
 	"github.com/spf13/cobra"
 )
 

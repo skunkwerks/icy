@@ -3,8 +3,8 @@ package store
 import (
 	"context"
 
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/models"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/models"
 	"golang.org/x/crypto/ssh"
 )
 

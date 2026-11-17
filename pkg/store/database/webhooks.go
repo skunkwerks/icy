@@ -3,11 +3,11 @@ package database
 import (
 	"context"
 
-	"github.com/charmbracelet/soft-serve/pkg/db"
-	"github.com/charmbracelet/soft-serve/pkg/db/models"
-	"github.com/charmbracelet/soft-serve/pkg/store"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/skunkwerks/icy/pkg/db"
+	"github.com/skunkwerks/icy/pkg/db/models"
+	"github.com/skunkwerks/icy/pkg/store"
 )
 
 type webhookStore struct{}
