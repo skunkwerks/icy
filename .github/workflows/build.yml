@@ -58,7 +58,7 @@ jobs:
           disk-size: 8G
           run-in-vm: |
             uname -a
-            pkg install -y go git bash
+            pkg install -y go git git-lfs bash
             cd firecracker-freebsd
             # the -race build of the testscript binary fails in the VM, so skip -race here
             export ICY_DISABLE_RACE_CHECKS=1
