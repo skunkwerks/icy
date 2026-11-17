@@ -26,4 +26,5 @@ type RepositoryStore interface {
 	SetRepoIsHiddenByName(ctx context.Context, h db.Handler, name string, isHidden bool) error
 	GetRepoIsMirrorByName(ctx context.Context, h db.Handler, name string) (bool, error)
 	SetRepoIsMirrorByName(ctx context.Context, h db.Handler, name string, isMirror bool) error
+	SetRepoUserIDByName(ctx context.Context, h db.Handler, name string, userID int64) error
 }

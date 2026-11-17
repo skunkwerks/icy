@@ -158,3 +158,11 @@ func (*repoStore) SetRepoProjectNameByName(ctx context.Context, tx db.Handler, n
 	_, err := tx.ExecContext(ctx, query, projectName, name)
 	return db.WrapError(err)
 }
+
+// SetRepoUserIDByName implements store.RepositoryStore.
+func (*repoStore) SetRepoUserIDByName(ctx context.Context, tx db.Handler, name string, userID int64) error {
+	name = utils.SanitizeRepo(name)
+	query := tx.Rebind("UPDATE repos SET user_id = ? WHERE name = ?;")
+	_, err := tx.ExecContext(ctx, query, userID, name)
+	return db.WrapError(err)
+}
