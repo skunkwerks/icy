@@ -1,27 +1,27 @@
-# Sunsetting Soft Serve
+# Sunsetting Icy
 
-To continue innovating in this space and supporting our most important work, we’ve sunset Soft Serve. The code will continue to be open source and publicly available. No further security updates will be applied. If you love this project and would like to maintain a fork, please do.
+To continue innovating in this space and supporting our most important work, we’ve sunset Icy. The code will continue to be open source and publicly available. No further security updates will be applied. If you love this project and would like to maintain a fork, please do.
 
-Thank you to everyone who has supported and contributed to Soft Serve over the years. We appreciate you.
+Thank you to everyone who has supported and contributed to Icy over the years. We appreciate you.
 
 ***
 
-# Soft Serve
+# Icy
 
 <p>
-    <img style="width: 451px" src="https://stuff.charm.sh/soft-serve/soft-serve-header.png?0" alt="A nice rendering of some melting ice cream with the words ‘Charm Soft Serve’ next to it"><br>
-    <a href="https://github.com/charmbracelet/soft-serve/releases"><img src="https://img.shields.io/github/release/charmbracelet/soft-serve.svg" alt="Latest Release"></a>
-    <a href="https://pkg.go.dev/github.com/charmbracelet/soft-serve?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
-    <a href="https://github.com/charmbracelet/soft-serve/actions"><img src="https://github.com/charmbracelet/soft-serve/workflows/build/badge.svg" alt="Build Status"></a>
-    <a href="https://nightly.link/charmbracelet/soft-serve/workflows/nightly/main"><img src="https://shields.io/badge/-Nightly%20Builds-orange?logo=hackthebox&logoColor=fff&style=appveyor"/></a>
+    <img style="width: 451px" src="https://stuff.charm.sh/icy/icy-header.png?0" alt="A nice rendering of some melting ice cream with the words ‘Charm Icy’ next to it"><br>
+    <a href="https://github.com/skunkwerks/icy/releases"><img src="https://img.shields.io/github/release/skunkwerks/icy.svg" alt="Latest Release"></a>
+    <a href="https://pkg.go.dev/github.com/skunkwerks/icy?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
+    <a href="https://github.com/skunkwerks/icy/actions"><img src="https://github.com/skunkwerks/icy/workflows/build/badge.svg" alt="Build Status"></a>
+    <a href="https://nightly.link/skunkwerks/icy/workflows/nightly/main"><img src="https://shields.io/badge/-Nightly%20Builds-orange?logo=hackthebox&logoColor=fff&style=appveyor"/></a>
 </p>
 
 A tasty, self-hostable Git server for the command line. 🍦
 
 <picture>
-  <source media="(max-width: 750px)" srcset="https://github.com/charmbracelet/soft-serve/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2">
-  <source media="(min-width: 750px)" width="750" srcset="https://github.com/charmbracelet/soft-serve/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2">
-  <img src="https://github.com/charmbracelet/soft-serve/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2" alt="Soft Serve screencast">
+  <source media="(max-width: 750px)" srcset="https://github.com/skunkwerks/icy/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2">
+  <source media="(min-width: 750px)" width="750" srcset="https://github.com/skunkwerks/icy/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2">
+  <img src="https://github.com/skunkwerks/icy/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2" alt="Icy screencast">
 </picture>
 
 - Easy to navigate TUI available over SSH
@@ -44,44 +44,44 @@ Just run `ssh git.charm.sh` for an example. You can also try some of the followi
 
 ```bash
 # Jump directly to a repo in the TUI
-ssh git.charm.sh -t soft-serve
+ssh git.charm.sh -t icy
 
 # Print out a directory tree for a repo
-ssh git.charm.sh repo tree soft-serve
+ssh git.charm.sh repo tree icy
 
 # Print a specific file
-ssh git.charm.sh repo blob soft-serve cmd/soft/main.go
+ssh git.charm.sh repo blob icy cmd/icy/main.go
 
 # Print a file with syntax highlighting and line numbers
-ssh git.charm.sh repo blob soft-serve cmd/soft/main.go -c -l
+ssh git.charm.sh repo blob icy cmd/icy/main.go -c -l
 ```
 
-Or you can use Soft Serve to browse local repositories using `soft browse
-[directory]` or running `soft` within a Git repository.
+Or you can use Icy to browse local repositories using `icy browse
+[directory]` or running `icy` within a Git repository.
 
 ## Installation
 
-Soft Serve is a single binary called `soft`. You can get it from a package
+Icy is a single binary called `icy`. You can get it from a package
 manager:
 
 ```bash
 # macOS or Linux
-brew install charmbracelet/tap/soft-serve
+brew install charmbracelet/tap/icy
 
 # Windows (with Winget)
-winget install charmbracelet.soft-serve
+winget install charmbracelet.icy
 
 # Arch Linux
-pacman -S soft-serve
+pacman -S icy
 
 # Nix
-nix-env -iA nixpkgs.soft-serve
+nix-env -iA nixpkgs.icy
 
 # Debian/Ubuntu
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
 echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-sudo apt update && sudo apt install soft-serve
+sudo apt update && sudo apt install icy
 
 # Fedora/RHEL
 echo '[charm]
@@ -90,61 +90,61 @@ baseurl=https://repo.charm.sh/yum/
 enabled=1
 gpgcheck=1
 gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
-sudo yum install soft-serve
+sudo yum install icy
 ```
 
 You can also download a binary from the [releases][releases] page. Packages are
 available in Alpine, Debian, and RPM formats. Binaries are available for Linux,
 macOS, and Windows.
 
-[releases]: https://github.com/charmbracelet/soft-serve/releases
+[releases]: https://github.com/skunkwerks/icy/releases
 
 Or just install it with `go`:
 
 ```bash
-go install github.com/charmbracelet/soft-serve/cmd/soft@latest
+go install github.com/skunkwerks/icy/cmd/icy@latest
 ```
 
 A [Docker image][docker] is also available.
 
-[docker]: https://github.com/charmbracelet/soft-serve/blob/main/docker.md
+[docker]: https://github.com/skunkwerks/icy/blob/main/docker.md
 
 ## Setting up a server
 
-Make sure `git` is installed, then run `soft serve`. That’s it.
+Make sure `git` is installed, then run `icy serve`. That’s it.
 
 This will create a `data` directory that will store all the repos, ssh keys,
 and database.
 
 By default, program configuration is stored within the `data` directory. But,
-this can be overridden by setting a custom path to a config file with `SOFT_SERVE_CONFIG_LOCATION`
-that is pre-created. If a config file pointed to by `SOFT_SERVE_CONFIG_LOCATION`,
+this can be overridden by setting a custom path to a config file with `ICY_CONFIG_LOCATION`
+that is pre-created. If a config file pointed to by `ICY_CONFIG_LOCATION`,
 the default location within the `data` dir is used for generating a default config.
 
-To change the default data path use `SOFT_SERVE_DATA_PATH` environment variable.
+To change the default data path use `ICY_DATA_PATH` environment variable.
 
 ```sh
-SOFT_SERVE_DATA_PATH=/var/lib/soft-serve soft serve
+ICY_DATA_PATH=/var/lib/icy icy serve
 ```
 
-When you run Soft Serve for the first time, make sure you have the
-`SOFT_SERVE_INITIAL_ADMIN_KEYS` environment variable is set to your ssh
+When you run Icy for the first time, make sure you have the
+`ICY_INITIAL_ADMIN_KEYS` environment variable is set to your ssh
 authorized key. Any added key to this variable will be treated as admin with
 full privileges.
 
-Using this environment variable, Soft Serve will create a new `admin` user that
+Using this environment variable, Icy will create a new `admin` user that
 has full privileges. You can rename and change the user settings later.
 
 If you'd like a repository to exist the moment the server finishes booting,
-with no human logging in to run `repo create`, set `SOFT_SERVE_DEFAULT_REPO`
+with no human logging in to run `repo create`, set `ICY_DEFAULT_REPO`
 to a repository name. This is useful for GitOps tools like ArgoCD that need a
 git remote to point at as part of their own bootstrap (e.g. from a Helm chart
 or Terraform apply):
 
 ```sh
-SOFT_SERVE_INITIAL_ADMIN_KEYS="$(cat ~/.ssh/id_ed25519.pub)" \
-SOFT_SERVE_DEFAULT_REPO=gitops \
-  soft serve
+ICY_INITIAL_ADMIN_KEYS="$(cat ~/.ssh/id_ed25519.pub)" \
+ICY_DEFAULT_REPO=gitops \
+  icy serve
 ```
 
 The repository is created empty and public, exactly as if a human had run
@@ -153,11 +153,11 @@ boot, not its reachability, which is still governed entirely by the
 `anon-access`/`allow-keyless` settings described below. Booting again against
 the same data directory is a no-op if the repository already exists.
 
-Check out [Systemd][systemd] on how to run Soft Serve as a service using
-Systemd. Soft Serve packages in our Apt/Yum repositories come with Systemd
+Check out [Systemd][systemd] on how to run Icy as a service using
+Systemd. Icy packages in our Apt/Yum repositories come with Systemd
 service units.
 
-[systemd]: https://github.com/charmbracelet/soft-serve/blob/main/systemd.md
+[systemd]: https://github.com/skunkwerks/icy/blob/main/systemd.md
 
 ### Server Configuration
 
@@ -166,11 +166,11 @@ Once you start the server for the first time, the settings will be in
 self-explanatory and will look like this:
 
 ```yaml
-# Soft Serve Server configurations
+# Icy Server configurations
 
 # The name of the server.
 # This is the name that will be displayed in the UI.
-name: "Soft Serve"
+name: "Icy"
 
 # Log format to use. Valid values are "json", "logfmt", and "text".
 log_format: "text"
@@ -185,12 +185,12 @@ ssh:
   public_url: "ssh://localhost:23231"
 
   # The path to the SSH server's private key.
-  key_path: "ssh/soft_serve_host"
+  key_path: "ssh/icy_host"
 
   # The path to the SSH server's client private key.
   # This key will be used to authenticate the server to make git requests to
   # ssh remotes.
-  client_key_path: "ssh/soft_serve_client"
+  client_key_path: "ssh/icy_client"
 
   # How the server's ssh client verifies host keys of ssh remotes it imports
   # or mirrors from, checked against <data_path>/ssh/known_hosts.
@@ -287,7 +287,7 @@ db:
   # The database data source name.
   # This is driver specific and can be a file path or connection string.
   # Make sure foreign key support is enabled when using SQLite.
-  data_source: "soft-serve.db?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)"
+  data_source: "icy.db?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)"
 
 # Git LFS configuration.
 lfs:
@@ -323,50 +323,50 @@ stats:
 ```
 
 You can also use environment variables, to override these settings. All server
-settings environment variables start with `SOFT_SERVE_` followed by the setting
+settings environment variables start with `ICY_` followed by the setting
 name all in uppercase. Here are some examples:
 
-- `SOFT_SERVE_NAME`: The name of the server that will appear in the TUI
-- `SOFT_SERVE_SSH_LISTEN_ADDR`: SSH listen address
-- `SOFT_SERVE_SSH_KEY_PATH`: SSH host key-pair path
-- `SOFT_SERVE_HTTP_LISTEN_ADDR`: HTTP listen address
-- `SOFT_SERVE_HTTP_PUBLIC_URL`: HTTP public URL used for cloning
-- `SOFT_SERVE_GIT_MAX_CONNECTIONS`: The number of simultaneous connections to git daemon
-- `SOFT_SERVE_ANON_ACCESS`: Overrides the `anon-access` setting (see [Authentication](#authentication))
-- `SOFT_SERVE_ALLOW_KEYLESS`: Overrides the `allow-keyless` setting (see [Authentication](#authentication))
-- `SOFT_SERVE_DEFAULT_REPO`: Repository name to create on boot if missing
+- `ICY_NAME`: The name of the server that will appear in the TUI
+- `ICY_SSH_LISTEN_ADDR`: SSH listen address
+- `ICY_SSH_KEY_PATH`: SSH host key-pair path
+- `ICY_HTTP_LISTEN_ADDR`: HTTP listen address
+- `ICY_HTTP_PUBLIC_URL`: HTTP public URL used for cloning
+- `ICY_GIT_MAX_CONNECTIONS`: The number of simultaneous connections to git daemon
+- `ICY_ANON_ACCESS`: Overrides the `anon-access` setting (see [Authentication](#authentication))
+- `ICY_ALLOW_KEYLESS`: Overrides the `allow-keyless` setting (see [Authentication](#authentication))
+- `ICY_DEFAULT_REPO`: Repository name to create on boot if missing
 
 #### Database Configuration
 
-Soft Serve supports both SQLite and Postgres for its database. Like all other Soft Serve settings, you can change the database _driver_ and _data source_ using either `config.yaml` or environment variables. The default config uses SQLite as the default database driver.
+Icy supports both SQLite and Postgres for its database. Like all other Icy settings, you can change the database _driver_ and _data source_ using either `config.yaml` or environment variables. The default config uses SQLite as the default database driver.
 
-To use Postgres as your database, first create a Soft Serve database:
+To use Postgres as your database, first create a Icy database:
 
 ```sh
-psql -h<hostname> -p<port> -U<user> -c 'CREATE DATABASE soft_serve'
+psql -h<hostname> -p<port> -U<user> -c 'CREATE DATABASE icy'
 ```
 
-Then set the database _data source_ to point to your Postgres database. For instance, if you're running Postgres locally, using the default user `postgres` and using a database name `soft_serve`, you would have this config in your config file or environment variable:
+Then set the database _data source_ to point to your Postgres database. For instance, if you're running Postgres locally, using the default user `postgres` and using a database name `icy`, you would have this config in your config file or environment variable:
 
 ```
 db:
   driver: "postgres"
-  data_source: "postgres://postgres@localhost:5432/soft_serve?sslmode=disable"
+  data_source: "postgres://postgres@localhost:5432/icy?sslmode=disable"
 ```
 
 Environment variables equivalent:
 
 ```sh
-SOFT_SERVE_DB_DRIVER=postgres \
-SOFT_SERVE_DB_DATA_SOURCE="postgres://postgres@localhost:5432/soft_serve?sslmode=disable" \
-soft serve
+ICY_DB_DRIVER=postgres \
+ICY_DB_DATA_SOURCE="postgres://postgres@localhost:5432/icy?sslmode=disable" \
+icy serve
 ```
 
-You can specify a database connection password in the _data source_ url. For example, `postgres://myuser:dbpass@localhost:5432/my_soft_serve_db`.
+You can specify a database connection password in the _data source_ url. For example, `postgres://myuser:dbpass@localhost:5432/my_icy_db`.
 
 #### LFS Configuration
 
-Soft Serve supports both Git LFS [HTTP](https://github.com/git-lfs/git-lfs/blob/main/docs/api/README.md) and [SSH](https://github.com/git-lfs/git-lfs/blob/main/docs/proposals/ssh_adapter.md) protocols out of the box, there is no need to do any extra set up.
+Icy supports both Git LFS [HTTP](https://github.com/git-lfs/git-lfs/blob/main/docs/api/README.md) and [SSH](https://github.com/git-lfs/git-lfs/blob/main/docs/proposals/ssh_adapter.md) protocols out of the box, there is no need to do any extra set up.
 
 Use the `lfs` config section to customize your Git LFS server.
 
@@ -374,7 +374,7 @@ Use the `lfs` config section to customize your Git LFS server.
 
 ## Server Access
 
-Soft Serve at its core manages your server authentication and authorization. Authentication verifies the identity of a user, while authorization determines their access rights to a repository.
+Icy at its core manages your server authentication and authorization. Authentication verifies the identity of a user, while authorization determines their access rights to a repository.
 
 To manage the server users, access, and repos, you can use the SSH command line interface.
 
@@ -383,27 +383,27 @@ you use your key here.
 
 > **Note** The `IdentitiesOnly` option is used to prevent SSH from using any
 > other keys in your `~/.ssh` directory. This is useful when you have multiple
-> keys, and you want to use a specific key for Soft Serve.
+> keys, and you want to use a specific key for Icy.
 
 For ease of use, instead of specifying the key, port, and hostname every time
-you SSH into Soft Serve, add your own Soft Serve instance entry to your SSH
-config. For instance, to use `ssh soft` instead of typing `ssh localhost -i
-~/.ssh/id_ed25519 -o IdentitiesOnly=yes -p 23231`, we can define a `soft` entry in our SSH config
+you SSH into Icy, add your own Icy instance entry to your SSH
+config. For instance, to use `ssh icy` instead of typing `ssh localhost -i
+~/.ssh/id_ed25519 -o IdentitiesOnly=yes -p 23231`, we can define a `icy` entry in our SSH config
 file `~/.ssh/config`.
 
 ```conf
-Host soft
+Host icy
   HostName localhost
   Port 23231
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 ```
 
-Now, we can do `ssh soft` to SSH into Soft Serve. Since `git` is also aware of
-this config, you can use `soft` as the hostname for your clone commands.
+Now, we can do `ssh icy` to SSH into Icy. Since `git` is also aware of
+this config, you can use `icy` as the hostname for your clone commands.
 
 ```sh
-git clone ssh://soft/dotfiles
+git clone ssh://icy/dotfiles
 # make changes
 # add & commit
 git push origin main
@@ -415,9 +415,9 @@ git push origin main
 ### Authentication
 
 Everything that needs authentication is done using SSH. Make sure you have
-added an entry for your Soft Serve instance in your `~/.ssh/config` file.
+added an entry for your Icy instance in your `~/.ssh/config` file.
 
-By default, Soft Serve gives read-only permission to anonymous connections to
+By default, Icy gives read-only permission to anonymous connections to
 any of the above protocols. This is controlled by two settings `anon-access`
 and `allow-keyless`.
 
@@ -466,16 +466,16 @@ which means scripting a fully open server from a cold start would otherwise
 require booting with an admin key, waiting for the server to come up, then
 SSHing in as that admin to run `settings` commands. For local development
 tooling (e.g. standing up a throwaway Git remote for something like Argo CD
-to pull from in a dev environment), you can instead set the `SOFT_SERVE_ANON_ACCESS`
-and `SOFT_SERVE_ALLOW_KEYLESS` environment variables (or the equivalent
+to pull from in a dev environment), you can instead set the `ICY_ANON_ACCESS`
+and `ICY_ALLOW_KEYLESS` environment variables (or the equivalent
 `anon_access`/`allow_keyless` `config.yaml` fields) to grant full,
 unauthenticated access from the moment the server starts, with no admin key
 and no `settings` command required:
 
 ```sh
-SOFT_SERVE_ANON_ACCESS=admin-access \
-SOFT_SERVE_ALLOW_KEYLESS=true \
-  soft serve
+ICY_ANON_ACCESS=admin-access \
+ICY_ALLOW_KEYLESS=true \
+  icy serve
 ```
 
 > **Warning** This grants anyone who can reach the server full admin access
@@ -486,17 +486,17 @@ SOFT_SERVE_ALLOW_KEYLESS=true \
 >
 > Unlike the `settings` command, these overrides always take precedence over
 > the database for as long as they're set — not just on first run. If you
-> also try to tighten access via `ssh soft settings ...` while an override is
+> also try to tighten access via `ssh icy settings ...` while an override is
 > active, the change is saved but has no effect until the override is
 > removed; the `settings` command will warn you when this happens.
 
 #### SSH
 
-Soft Serve doesn't allow duplicate SSH public keys for users. A public key can be associated with one user only. This makes SSH authentication simple and straight forward, add your public key to your Soft Serve user to be able to access Soft Serve.
+Icy doesn't allow duplicate SSH public keys for users. A public key can be associated with one user only. This makes SSH authentication simple and straight forward, add your public key to your Icy user to be able to access Icy.
 
 #### HTTP
 
-You can generate user access tokens through the SSH command line interface. Access tokens can have an optional expiration date. Use your access token as the basic auth user to access your Soft Serve repos through HTTP.
+You can generate user access tokens through the SSH command line interface. Access tokens can have an optional expiration date. Use your access token as the basic auth user to access your Icy repos through HTTP.
 
 ```sh
 # Create a user token
@@ -517,7 +517,7 @@ git clone http://ss_98fghi1234abc56789012345678901234de246d7@localhost:23232/my-
 
 ### Authorization
 
-Soft Serve offers a simple access control. There are four access levels,
+Icy offers a simple access control. There are four access levels,
 no-access, read-only, read-write, and admin-access.
 
 `admin-access` has full control of the server and can make changes to users and repos.
@@ -633,7 +633,7 @@ ssh -p 23231 localhost repo create icecream -p '-d "This is an Ice Cream descrip
 ssh -p 23231 localhost repo create -h
 ```
 
-Or you can add your Soft Serve server as a remote to any existing repo, given
+Or you can add your Icy server as a remote to any existing repo, given
 you have write access, and push to remote:
 
 ```
@@ -665,7 +665,7 @@ git push charm main
 You can also *import* repositories from any public remote. Use the `repo import` command.
 
 ```sh
-ssh -p 23231 localhost repo import soft-serve https://github.com/charmbracelet/soft-serve
+ssh -p 23231 localhost repo import icy https://github.com/skunkwerks/icy
 ```
 
 Use `--mirror` or `-m` to mark the repository as a *pull* mirror.
@@ -694,17 +694,17 @@ be achieved by adding a collaborator to your repository.
 Use the `repo collab <command> <repo>` command to manage repo collaborators.
 
 ```sh
-# Add collaborator to soft-serve
-ssh -p 23231 localhost repo collab add soft-serve frankie
+# Add collaborator to icy
+ssh -p 23231 localhost repo collab add icy frankie
 
 # Add collaborator with a specific access level
-ssh -p 23231 localhost repo collab add soft-serve beatrice read-only
+ssh -p 23231 localhost repo collab add icy beatrice read-only
 
 # Remove collaborator
-ssh -p 23231 localhost repo collab remove soft-serve beatrice
+ssh -p 23231 localhost repo collab remove icy beatrice
 
 # List collaborators
-ssh -p 23231 localhost repo collab list soft-serve
+ssh -p 23231 localhost repo collab list icy
 ```
 
 ### Repository Metadata
@@ -738,30 +738,30 @@ also use `repo branch default` to set or get the repository default branch.
 ### Repository Tree
 
 To print a file tree for the project, just use the `repo tree` command along with
-the repo name as the SSH command to your Soft Serve server:
+the repo name as the SSH command to your Icy server:
 
 ```sh
-ssh -p 23231 localhost repo tree soft-serve
+ssh -p 23231 localhost repo tree icy
 ```
 
 You can also specify the sub-path and a specific reference or branch.
 
 ```sh
-ssh -p 23231 localhost repo tree soft-serve server/config
-ssh -p 23231 localhost repo tree soft-serve main server/config
+ssh -p 23231 localhost repo tree icy server/config
+ssh -p 23231 localhost repo tree icy main server/config
 ```
 
 From there, you can print individual files using the `repo blob` command:
 
 ```sh
-ssh -p 23231 localhost repo blob soft-serve cmd/soft/main.go
+ssh -p 23231 localhost repo blob icy cmd/icy/main.go
 ```
 
 You can add the `-c` flag to enable syntax coloring and `-l` to print line
 numbers:
 
 ```sh
-ssh -p 23231 localhost repo blob soft-serve cmd/soft/main.go -c -l
+ssh -p 23231 localhost repo blob icy cmd/icy/main.go -c -l
 
 ```
 
@@ -769,7 +769,7 @@ Use `--raw` to print raw file contents. This is useful for dumping binary data.
 
 ### Repository webhooks
 
-Soft Serve supports repository webhooks using the `repo webhook` command. You
+Icy supports repository webhooks using the `repo webhook` command. You
 can create and manage webhooks for different repository events such as _push_,
 _collaborators_, and _branch_tag_create_ events.
 
@@ -793,12 +793,12 @@ Flags:
   -h, --help   help for webhook
 ```
 
-## The Soft Serve TUI
+## The Icy TUI
 
-<img src="https://stuff.charm.sh/soft-serve/soft-serve-demo-commit.png" width="750" alt="TUI example showing a diff">
+<img src="https://stuff.charm.sh/icy/icy-demo-commit.png" width="750" alt="TUI example showing a diff">
 
-Soft Serve TUI is mainly used to browse repos over SSH. You can also use it to
-browse local repositories with `soft browse` or running `soft` within a Git
+Icy TUI is mainly used to browse repos over SSH. You can also use it to
+browse local repositories with `icy browse` or running `icy` within a Git
 repository.
 
 ```sh
@@ -808,7 +808,7 @@ ssh localhost -p 23231
 It's also possible to “link” to a specific repo:
 
 ```sh
-ssh -p 23231 localhost -t soft-serve
+ssh -p 23231 localhost -t icy
 ```
 
 You can copy text to your clipboard over SSH. For instance, you can press
@@ -821,14 +821,14 @@ You can copy text to your clipboard over SSH. For instance, you can press
 
 ## Hooks
 
-Soft Serve supports git server-side hooks `pre-receive`, `update`,
+Icy supports git server-side hooks `pre-receive`, `update`,
 `post-update`, and `post-receive`. This means you can define your own hooks to
 run on repository push events. Hooks can be defined as a per-repository hook,
 and/or global hooks that run for all repositories.
 
 You can find per-repository hooks under the repository `hooks` directory.
 
-Globs hooks can be found in your `SOFT_SERVE_DATA_PATH` directory under
+Globs hooks can be found in your `ICY_DATA_PATH` directory under
 `hooks`. Defining global hooks is useful if you want to run CI/CD for example.
 
 Here's an example of sending a message after receiving a push event. Create an
@@ -866,7 +866,7 @@ else
         newrev_type=$(git cat-file -t $newrev)
 fi
 
-echo "Hi from Soft Serve update hook!"
+echo "Hi from Icy update hook!"
 echo
 echo "RefName: $refname"
 echo "Change Type: $newrev_type"
@@ -880,7 +880,7 @@ Now, you should get a message after pushing changes to any repository.
 
 ## A note about RSA keys
 
-Unfortunately, due to a shortcoming in Go’s `x/crypto/ssh` package, Soft Serve
+Unfortunately, due to a shortcoming in Go’s `x/crypto/ssh` package, Icy
 does not currently support access via new SSH RSA keys: only the old SHA-1
 ones will work.
 
@@ -902,7 +902,7 @@ If you’re curious about the inner workings of this problem have a look at:
 
 See [contributing][contribute].
 
-[contribute]: https://github.com/charmbracelet/soft-serve/contribute
+[contribute]: https://github.com/skunkwerks/icy/contribute
 
 ## Feedback
 
@@ -914,7 +914,7 @@ We’d love to hear your thoughts on this project. Feel free to drop us a note!
 
 ## License
 
-[MIT](https://github.com/charmbracelet/soft-serve/raw/main/LICENSE)
+[MIT](https://github.com/skunkwerks/icy/raw/main/LICENSE)
 
 ---
 
