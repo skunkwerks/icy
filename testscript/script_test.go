@@ -109,6 +109,7 @@ func TestScript(t *testing.T) {
 			"curl":                   cmdCurl,
 			"mkfile":                 cmdMkfile,
 			"envfile":                cmdEnvfile,
+			"envsubst":               cmdEnvsubst,
 			"readfile":               cmdReadfile,
 			"dos2unix":               cmdDos2Unix,
 			"new-webhook":            cmdNewWebhook,
@@ -117,6 +118,7 @@ func TestScript(t *testing.T) {
 			"ensureserverrunning":    cmdEnsureServerRunning,
 			"ensureservernotrunning": cmdEnsureServerNotRunning,
 			"stopserver":             cmdStopserver,
+			"reloadserver":           cmdReloadserver,
 			"ui":                     cmdUI(admin1.Signer()),
 			"uui":                    cmdUI(user1.Signer()),
 		},
@@ -431,6 +433,16 @@ func cmdEnvfile(ts *testscript.TestScript, neg bool, args []string) {
 	}
 }
 
+// cmdEnvsubst copies src to dst, replacing $VAR and ${VAR} with the
+// script's environment.
+func cmdEnvsubst(ts *testscript.TestScript, neg bool, args []string) {
+	if neg || len(args) != 2 {
+		ts.Fatalf("usage: envsubst src dst")
+	}
+	out := os.Expand(ts.ReadFile(args[0]), ts.Getenv)
+	ts.Check(os.WriteFile(ts.MkAbs(args[1]), []byte(out), 0o644))
+}
+
 func cmdNewWebhook(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 1 {
 		ts.Fatalf("usage: new-webhook <env-name>")
@@ -728,6 +740,16 @@ func cmdStopserver(ts *testscript.TestScript, neg bool, args []string) {
 	check(ts, err, neg)
 	resp.Body.Close()
 	time.Sleep(time.Second * 2) // Allow some time for the server to stop
+}
+
+// cmdReloadserver asks the server to reload, as SIGHUP does, and waits for
+// the reload to finish.
+func cmdReloadserver(ts *testscript.TestScript, neg bool, args []string) {
+	resp, err := http.DefaultClient.Head(fmt.Sprintf("%s/__reload", ts.Getenv("ICY_HTTP_PUBLIC_URL"))) //nolint:noctx
+	check(ts, err, neg)
+	if resp != nil {
+		resp.Body.Close()
+	}
 }
 
 func setupPostgres(t testscript.T, cfg *config.Config) (func(), error) {

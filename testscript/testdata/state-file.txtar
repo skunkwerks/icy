@@ -1,0 +1,188 @@
+# vi: set ft=conf
+
+# With state_source "config", users, repositories and access settings come
+# from config.yaml. The server makes its database match the file at startup
+# and on reload, and refuses ssh commands that would change them.
+#
+# The test harness exports ICY_STATE_SOURCE=db, which beats config.yaml,
+# so config mode is chosen here with the flag.
+
+[windows] dos2unix users.txt users2.txt
+
+envsubst config.yaml.in good.yaml
+envsubst bad.yaml.in bad.yaml
+envsubst config2.yaml.in config2.yaml
+
+# check-state finds every problem in a config.yaml without a server
+! exec icy admin check-state bad.yaml
+stderr 'admn'
+exec icy admin check-state good.yaml
+stdout '2 users, 2 repositories'
+
+# without users or repos keys there is nothing to manage, which is refused
+! exec icy admin check-state empty.yaml
+stderr 'no users or repos key'
+
+# a config.yaml with bad users or repos stops the server from starting
+cp bad.yaml $DATA_PATH/config.yaml
+! exec icy serve --state-source config
+stderr 'admn'
+
+# start icy serve in config mode
+cp good.yaml $DATA_PATH/config.yaml
+exec icy admin check-state
+stdout '2 users, 2 repositories'
+exec icy serve --state-source config &
+ensureserverrunning SSH_PORT
+
+# the database matches config.yaml
+icy user list
+cmp stdout users.txt
+icy settings anon-access
+stdout 'no-access'
+icy repo list
+stdout 'notes'
+stdout 'secret'
+icy repo private secret
+stdout 'true'
+icy repo description secret
+stdout 'Top secret'
+icy repo collab list secret
+stdout 'user1'
+
+# ssh commands that would change the managed state are refused
+! icy user create bob
+stderr 'config.yaml'
+! icy user add-pubkey user1 "$ADMIN2_AUTHORIZED_KEY"
+stderr 'config.yaml'
+! icy repo create other
+stderr 'config.yaml'
+! icy repo private notes true
+stderr 'config.yaml'
+! icy repo delete notes
+stderr 'config.yaml'
+! icy repo collab add notes user1 read-only
+stderr 'config.yaml'
+! icy settings anon-access read-only
+stderr 'config.yaml'
+! icy settings allow-keyless false
+stderr 'config.yaml'
+
+# pushing content to a listed repository works
+git clone ssh://localhost:$SSH_PORT/notes notes
+mkfile ./notes/README.md '# notes'
+git -C notes add -A
+git -C notes commit -m 'first'
+git -C notes push origin HEAD
+icy repo tree notes
+stdout 'README.md'
+
+# a collaborator with read-write access can push too
+ugit clone ssh://localhost:$SSH_PORT/secret secret
+mkfile ./secret/README.md '# secret'
+ugit -C secret add -A
+ugit -C secret commit -m 'first'
+ugit -C secret push origin HEAD
+
+# a push to a name config.yaml does not list does not create a repository
+! git -C notes push ssh://localhost:$SSH_PORT/unlisted HEAD
+icy repo list
+! stdout 'unlisted'
+
+# change config.yaml and reload: user1 loses the secret repository, notes
+# goes away, and with anon_access gone the default read-only applies,
+# although the server started with anon_access: no-access in config.yaml
+cp config2.yaml $DATA_PATH/config.yaml
+reloadserver
+icy user list
+cmp stdout users2.txt
+icy repo list
+! stdout 'notes'
+icy settings anon-access
+stdout 'read-only'
+! uicy repo tree secret
+stderr 'repository not found'
+
+# a bad config.yaml on reload is ignored and the current state stays
+cp bad.yaml $DATA_PATH/config.yaml
+reloadserver
+icy user list
+cmp stdout users2.txt
+
+# export-state prints config.yaml keys for what the database holds
+exec icy admin export-state
+stdout 'anon_access: read-only'
+stdout 'public_keys:'
+stdout 'name: secret'
+stdout 'name: carol'
+! stdout 'name: notes'
+
+# the log says which reloads were refused, and that the change to
+# log.path in config2.yaml needs a restart
+stopserver
+wait
+stderr 'need a restart'
+stderr 'keeping the current state'
+
+# in db mode, users and repos in config.yaml are ignored with a warning
+cp good.yaml $DATA_PATH/config.yaml
+exec icy serve &
+ensureserverrunning SSH_PORT
+icy user list
+cmp stdout users2.txt
+stopserver
+wait
+stderr 'ignored unless state_source is "config"'
+
+-- config.yaml.in --
+# Server settings come from the environment in this test.
+anon_access: no-access
+allow_keyless: true
+users:
+  - name: admin
+    admin: true
+    public_keys:
+      - "$ADMIN1_AUTHORIZED_KEY"
+  - name: user1
+    public_keys:
+      - "$USER1_AUTHORIZED_KEY"
+repos:
+  - name: notes
+    description: Shared notes
+  - name: secret
+    description: Top secret
+    private: true
+    collaborators:
+      user1: read-write
+-- config2.yaml.in --
+log:
+  path: "needs-restart.log"
+users:
+  - name: admin
+    admin: true
+    public_keys:
+      - "$ADMIN1_AUTHORIZED_KEY"
+  - name: user1
+    public_keys:
+      - "$USER1_AUTHORIZED_KEY"
+  - name: carol
+repos:
+  - name: secret
+    private: true
+-- bad.yaml.in --
+users:
+  - name: admin
+    admn: true
+    public_keys:
+      - "$ADMIN1_AUTHORIZED_KEY"
+repos:
+  - name: notes
+-- empty.yaml --
+name: "Icy"
+-- users.txt --
+admin
+user1
+-- users2.txt --
+admin
+carol
+user1
