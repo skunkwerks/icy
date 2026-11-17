@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"charm.land/log/v2"
@@ -67,6 +68,19 @@ func (r *logWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return nil, nil, fmt.Errorf("http.Hijacker not implemented")
 }
 
+// logURL returns u for logging, with a web sign-in token replaced so a
+// log line cannot be used to sign in.
+func logURL(u *url.URL) string {
+	q := u.Query()
+	if !q.Has("token") {
+		return u.String()
+	}
+	q.Set("token", "REDACTED")
+	c := *u
+	c.RawQuery = q.Encode()
+	return c.String()
+}
+
 // NewLoggingMiddleware returns a new logging middleware.
 func NewLoggingMiddleware(next http.Handler, logger *log.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +88,7 @@ func NewLoggingMiddleware(next http.Handler, logger *log.Logger) http.Handler {
 		writer := &logWriter{code: http.StatusOK, ResponseWriter: w}
 		logger.Debug("request",
 			"method", r.Method,
-			"path", r.URL,
+			"path", logURL(r.URL),
 			"addr", r.RemoteAddr)
 		next.ServeHTTP(writer, r)
 		elapsed := time.Since(start)

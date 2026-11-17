@@ -26,7 +26,7 @@ func NewContextHandler(ctx context.Context) func(http.Handler) http.Handler {
 			ctx = backend.WithContext(ctx, be)
 			ctx = log.WithContext(ctx, logger.With(
 				"method", r.Method,
-				"path", r.URL,
+				"path", logURL(r.URL),
 				"addr", r.RemoteAddr,
 			))
 			ctx = db.WithContext(ctx, dbx)
