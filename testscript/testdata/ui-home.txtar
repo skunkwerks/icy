@@ -15,17 +15,17 @@ grep 'No items' home.txt
 # test about tab
 ui '"\t    q"'
 cp stdout about.txt
-grep 'Create a `.soft-serve` repository and add a `README.md` file' about.txt
+grep 'Create a `.icy` repository and add a `README.md` file' about.txt
 
 # add a new repo
-icy repo create .soft-serve -n 'Config' -d '"Test Soft Serve"'
-icy repo description .soft-serve
+icy repo create .icy -n 'Config' -d '"Test Soft Serve"'
+icy repo description .icy
 stdout 'Test Soft Serve'
-icy repo project-name .soft-serve
+icy repo project-name .icy
 stdout 'Config'
 
 # clone repo
-git clone ssh://localhost:$SSH_PORT/.soft-serve config
+git clone ssh://localhost:$SSH_PORT/.icy config
 
 # create readme file
 mkfile ./config/README.md '# Hello World\nTest Soft Serve'
@@ -38,7 +38,7 @@ ui '"    q"'
 cp stdout home2.txt
 grep 'Config' home2.txt
 grep 'Test Soft Serve' home2.txt
-grep 'git clone ssh://localhost:.*/.soft-serve' home2.txt
+grep 'git clone ssh://localhost:.*/.icy' home2.txt
 
 # test about tab
 ui '"\t      q"'

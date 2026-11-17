@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	defaultNoContent = "No readme found.\n\nCreate a `.soft-serve` repository and add a `README.md` file to display readme."
+	defaultNoContent = "No readme found.\n\nCreate a `.icy` repository and add a `README.md` file to display readme."
 )
 
 type pane int
@@ -201,7 +201,7 @@ func (s *Selection) Init() tea.Cmd {
 	}
 	sortedItems := make(Items, 0)
 	for _, r := range repos {
-		if r.Name() == ".soft-serve" {
+		if r.Name() == ".icy" {
 			readme, path, err := backend.Readme(r, nil)
 			if err != nil {
 				continue
