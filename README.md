@@ -225,6 +225,15 @@ lfs:
   # Enable Git SSH transfer.
   ssh_enabled: false
 
+# The read-only web UI, served by the HTTP server.
+web:
+  # Enable the web UI.
+  enabled: true
+  # Who runs this server, shown on the front page.
+  owner: ""
+  # A short description, shown on the front page.
+  description: ""
+
 # Cron job configuration
 jobs:
   mirror_pull: "@every 10m"
@@ -659,6 +668,32 @@ repos can only be accessed by admins and collaborators.
 ssh -p 23231 localhost repo private icecream true
 ```
 
+### Repository Visibility
+
+A repository has one of three visibilities.
+
+- `public` repositories are listed. Anyone the `anon-access` setting allows
+  can read and clone them.
+- `unlisted` repositories are not listed anywhere. Anyone who knows the name
+  can still read them and clone them over HTTPS.
+- `private` repositories can only be read by admins, the owner and
+  collaborators. To everyone else a private repository looks exactly like one
+  that does not exist.
+
+Visibility is stored in the `private` and `hidden` flags, so the `private` and
+`hidden` commands still work. `unlisted` is the same as hidden but not private.
+
+```sh
+# Show the visibility
+ssh -p 23231 localhost repo visibility icecream
+
+# Change it
+ssh -p 23231 localhost repo visibility icecream unlisted
+
+# Set it when creating a repository
+ssh -p 23231 localhost repo create icecream --visibility private
+```
+
 ### Repository Branches & Tags
 
 Use `repo branch` and `repo tag` to list, and delete branches or tags. You can
@@ -745,6 +780,47 @@ You can copy text to your clipboard over SSH. For instance, you can press
 [^osc52]:
     Copying over SSH depends on your terminal support of OSC52. Refer to
     [go-osc52](https://github.com/aymanbagabas/go-osc52) for more information.
+
+## The Web UI
+
+The HTTP server also serves a read-only web view of your repositories. It
+needs no JavaScript and follows the browser's light or dark theme.
+
+- `/` shows the server name, owner and description, and the public
+  repositories.
+- `/<repo>` shows the README, the latest commits and the clone URLs.
+- `/<repo>/~/tree`, `/~/log` and `/~/refs` browse files, history, branches and
+  tags. Add `?h=<branch, tag or commit>` to look at another revision.
+- `/<repo>/~/blob/<path>` shows a file with syntax highlighting.
+  `/<repo>/~/raw/<path>` downloads it.
+- `/<repo>/~/commit/<id>` shows one commit and its diff.
+
+No repository name can contain `~`, so these paths never clash with git, LFS
+or `go get`.
+
+Set `web.owner` and `web.description` in `config.yaml` to fill in the front
+page. Set `web.enabled: false`, or `ICY_WEB_ENABLED=false`, to turn the web UI
+off.
+
+### Signing in
+
+Anyone can browse what the `anon-access` setting lets them read. To see your
+private repositories, sign in with SSH:
+
+```sh
+ssh -p 23231 localhost web login
+# or go straight to a repository
+ssh -p 23231 localhost web login icecream
+```
+
+This prints a link. It works once and expires after five minutes. Opening it
+gives your browser a session cookie that lasts 24 hours and grants your read
+access. Use the "Sign out" button to end the session early.
+
+The cookie is HttpOnly and SameSite=Lax. It is marked Secure when the server
+uses TLS or `http.public_url` starts with `https://`. Pending sign-in links
+and sessions are tied to the running server. A restart cancels unused links
+and signs everyone out.
 
 ## Hooks
 
