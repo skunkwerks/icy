@@ -833,11 +833,7 @@ See [contributing][contribute].
 
 ## Feedback
 
-We’d love to hear your thoughts on this project. Feel free to drop us a note!
-
-- [Twitter](https://twitter.com/charmcli)
-- [The Fediverse](https://mastodon.social/@charmcli)
-- [Discord](https://charm.sh/chat)
+Please open an issue at https://github.com/skunkwerks/icy/issues.
 
 ## License
 
@@ -845,8 +841,5 @@ We’d love to hear your thoughts on this project. Feel free to drop us a note!
 
 ---
 
-Part of [Charm](https://charm.sh).
-
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
-
-Charm热爱开源 • Charm loves open source
+Icy is a fork of [Soft Serve](https://github.com/charmbracelet/soft-serve) by
+[Charm](https://charm.sh).
