@@ -1,4 +1,4 @@
-cmd/soft/soft
+cmd/icy/soft
 ./soft
 .ssh
 .repos

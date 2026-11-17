@@ -38,9 +38,9 @@ func PrepareBuildCommand(binPath string) *exec.Cmd {
 	_, disableRaceSet := os.LookupEnv("SOFT_SERVE_DISABLE_RACE_CHECKS")
 	if disableRaceSet {
 		// don't add the -race flag
-		return exec.Command("go", "build", "-cover", "-o", binPath, filepath.Join("..", "cmd", "soft")) //nolint:noctx
+		return exec.Command("go", "build", "-cover", "-o", binPath, filepath.Join("..", "cmd", "icy")) //nolint:noctx
 	}
-	return exec.Command("go", "build", "-race", "-cover", "-o", binPath, filepath.Join("..", "cmd", "soft")) //nolint:noctx
+	return exec.Command("go", "build", "-race", "-cover", "-o", binPath, filepath.Join("..", "cmd", "icy")) //nolint:noctx
 }
 
 func TestMain(m *testing.M) {
