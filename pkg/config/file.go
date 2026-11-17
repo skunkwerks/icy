@@ -206,6 +206,41 @@ webhook:
 # Name of a repository to create automatically on boot if it doesn't already
 # exist. Empty disables this behavior.
 #default_repo: ""
+
+# Where users, repositories and access settings come from.
+# "db" keeps them in the database, and ssh commands change them.
+# "config" takes them from the anon_access, allow_keyless, users and repos
+# keys below. The server makes its database match them at startup and on
+# SIGHUP, and refuses ssh commands that would change them.
+state_source: "{{ .StateSource }}"
+
+# Access for anonymous users: no-access, read-only, read-write or
+# admin-access. With state_source "db" a value here overrides the database.
+# With "config" it is written to the database. ICY_ANON_ACCESS beats both.
+#anon_access: "read-only"
+
+# Allow connections that offer no public key. Works like anon_access.
+#allow_keyless: true
+
+# Users and repositories, read only when state_source is "config".
+# Anything not listed here is removed from the database.
+#users:
+#  - name: alice
+#    admin: true
+#    public_keys:
+#      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... alice@laptop"
+#  - name: bob
+#    public_keys:
+#      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... bob@desk"
+#repos:
+#  - name: icy
+#    project_name: Icy
+#    description: A Git server
+#    private: true
+#    hidden: false
+#    owner: alice   # defaults to the first admin in users
+#    collaborators:
+#      bob: read-write
 `))
 
 func newConfigFile(cfg *Config) string {

@@ -196,6 +196,16 @@ func (c *WebhookConfig) Allowlist() ssrf.AllowedNetworks {
 	return c.allowedNetworks
 }
 
+// Values for Config.StateSource.
+const (
+	// StateSourceDB keeps users, repositories and access in the database
+	// and lets ssh commands change them.
+	StateSourceDB = "db"
+	// StateSourceConfig reads them from the users, repos, anon_access and
+	// allow_keyless keys of config.yaml and makes the database match.
+	StateSourceConfig = "config"
+)
+
 // Config is the configuration for Icy.
 type Config struct {
 	// Name is the name of the server.
@@ -229,6 +239,10 @@ type Config struct {
 	Web WebConfig `envPrefix:"WEB_" yaml:"web"`
 	// Webhook is the configuration for repository webhooks.
 	Webhook WebhookConfig `envPrefix:"WEBHOOK_" yaml:"webhook"`
+	// StateSource selects where users, repositories and access settings
+	// come from: StateSourceDB (the default) or StateSourceConfig. The
+	// users and repos keys are read by package statefile, not here.
+	StateSource string `env:"STATE_SOURCE" yaml:"state_source"`
 
 	// InitialAdminKeys is a list of public keys that will be added to the list of admins.
 	InitialAdminKeys []string `env:"INITIAL_ADMIN_KEYS" envSeparator:"\n" yaml:"initial_admin_keys"`
@@ -242,6 +256,11 @@ type Config struct {
 	// rejected at parse time by AccessLevel's TextUnmarshaler.
 	//
 	// This is intended for scripted, non-production bootstrapping only.
+	//
+	// With StateSource set to StateSourceConfig the backend does not read
+	// this field. The state reconcile writes the effective value
+	// (ICY_ANON_ACCESS, else config.yaml, else the default) into the
+	// database instead, so that a reload can change it.
 	AnonAccess *access.AccessLevel `env:"ANON_ACCESS" yaml:"anon_access"`
 
 	// AllowKeyless overrides whether keyless (no public key) connections
@@ -249,7 +268,8 @@ type Config struct {
 	//
 	// If set (non-nil), this takes precedence over the "allow-keyless"
 	// value stored in the database on every read, same as AnonAccess above.
-	// A nil value means "no override": fall back to the database.
+	// A nil value means "no override": fall back to the database. With
+	// StateSourceConfig it is handled like AnonAccess.
 	AllowKeyless *bool `env:"ALLOW_KEYLESS" yaml:"allow_keyless"`
 
 	// DefaultRepo is a repository name to create on boot if it does not
@@ -314,6 +334,7 @@ func (c *Config) Environ() []string {
 		fmt.Sprintf("ICY_WEBHOOK_ALLOWED_NETWORKS=%s", strings.Join(c.Webhook.AllowedNetworks, ",")),
 		fmt.Sprintf("ICY_WEBHOOK_MAX_ATTEMPTS=%d", c.Webhook.MaxAttempts),
 		fmt.Sprintf("ICY_WEBHOOK_RETRY_BACKOFF=%s", c.Webhook.RetryBackoff),
+		fmt.Sprintf("ICY_STATE_SOURCE=%s", c.StateSource),
 	}...)
 
 	// AnonAccess and AllowKeyless are tri-state overrides: only emit them
@@ -510,6 +531,7 @@ func DefaultConfig() *Config {
 			MaxAttempts:  5,
 			RetryBackoff: 2 * time.Minute,
 		},
+		StateSource: StateSourceDB,
 	}
 }
 
@@ -575,6 +597,10 @@ func (c *Config) Validate() error {
 
 	if c.HTTP.TLSCertPath != "" && !filepath.IsAbs(c.HTTP.TLSCertPath) {
 		c.HTTP.TLSCertPath = filepath.Join(c.DataPath, c.HTTP.TLSCertPath)
+	}
+
+	if err := c.validateState(); err != nil {
+		return err
 	}
 
 	if strings.HasPrefix(c.DB.Driver, "sqlite") && !filepath.IsAbs(c.DB.DataSource) {
