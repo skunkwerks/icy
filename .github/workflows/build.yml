@@ -42,5 +42,5 @@ jobs:
       - name: Test
         run: go test ./...
         env:
-          SOFT_SERVE_DB_DRIVER: postgres
-          SOFT_SERVE_DB_DATA_SOURCE: postgres://postgres:postgres@localhost/postgres?sslmode=disable
+          ICY_DB_DRIVER: postgres
+          ICY_DB_DATA_SOURCE: postgres://postgres:postgres@localhost/postgres?sslmode=disable

@@ -1,10 +1,10 @@
 # vi: set ft=conf
 
 # disable http listening
-env SOFT_SERVE_SSH_ENABLED=true
-env SOFT_SERVE_GIT_ENABLED=true
-env SOFT_SERVE_HTTP_ENABLED=false
-env SOFT_SERVE_STATS_ENABLED=true
+env ICY_SSH_ENABLED=true
+env ICY_GIT_ENABLED=true
+env ICY_HTTP_ENABLED=false
+env ICY_STATS_ENABLED=true
 
 # start icy serve
 exec icy serve --sync-hooks &

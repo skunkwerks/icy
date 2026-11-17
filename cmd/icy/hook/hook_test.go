@@ -23,8 +23,8 @@ func TestRunCustomHookPropagatesExitError(t *testing.T) {
 		t.Skip("test binary is not executable on this platform")
 	}
 
-	t.Setenv("SOFT_SERVE_TEST_HELPER", "1")
-	t.Setenv("SOFT_SERVE_TEST_HELPER_EXIT", "1")
+	t.Setenv("ICY_TEST_HELPER", "1")
+	t.Setenv("ICY_TEST_HELPER_EXIT", "1")
 	err = runCustomHook(
 		context.Background(),
 		executable,
@@ -59,10 +59,10 @@ func TestRunCustomHookIgnoresMissingOrNonExecutableHook(t *testing.T) {
 }
 
 func TestCustomHookHelperProcess(t *testing.T) {
-	if os.Getenv("SOFT_SERVE_TEST_HELPER") != "1" {
+	if os.Getenv("ICY_TEST_HELPER") != "1" {
 		return
 	}
-	if os.Getenv("SOFT_SERVE_TEST_HELPER_EXIT") == "1" {
+	if os.Getenv("ICY_TEST_HELPER_EXIT") == "1" {
 		os.Exit(1)
 	}
 	os.Exit(0)

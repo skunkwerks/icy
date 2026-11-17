@@ -11,11 +11,11 @@ import (
 func TestParseMultipleKeys(t *testing.T) {
 	is := is.New(t)
 	td := t.TempDir()
-	is.NoErr(os.Setenv("SOFT_SERVE_INITIAL_ADMIN_KEYS", "testdata/k1.pub\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFxIobhwtfdwN7m1TFt9wx3PsfvcAkISGPxmbmbauST8 a@b"))
-	is.NoErr(os.Setenv("SOFT_SERVE_DATA_PATH", td))
+	is.NoErr(os.Setenv("ICY_INITIAL_ADMIN_KEYS", "testdata/k1.pub\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFxIobhwtfdwN7m1TFt9wx3PsfvcAkISGPxmbmbauST8 a@b"))
+	is.NoErr(os.Setenv("ICY_DATA_PATH", td))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_INITIAL_ADMIN_KEYS"))
-		is.NoErr(os.Unsetenv("SOFT_SERVE_DATA_PATH"))
+		is.NoErr(os.Unsetenv("ICY_INITIAL_ADMIN_KEYS"))
+		is.NoErr(os.Unsetenv("ICY_DATA_PATH"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())
@@ -27,8 +27,8 @@ func TestParseMultipleKeys(t *testing.T) {
 
 func TestMergeInitAdminKeys(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_INITIAL_ADMIN_KEYS", "testdata/k1.pub"))
-	t.Cleanup(func() { is.NoErr(os.Unsetenv("SOFT_SERVE_INITIAL_ADMIN_KEYS")) })
+	is.NoErr(os.Setenv("ICY_INITIAL_ADMIN_KEYS", "testdata/k1.pub"))
+	t.Cleanup(func() { is.NoErr(os.Unsetenv("ICY_INITIAL_ADMIN_KEYS")) })
 	cfg := &Config{
 		DataPath:         t.TempDir(),
 		InitialAdminKeys: []string{"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFxIobhwtfdwN7m1TFt9wx3PsfvcAkISGPxmbmbauST8 a@b"},
@@ -62,21 +62,21 @@ func TestCustomConfigLocation(t *testing.T) {
 	is := is.New(t)
 	td := t.TempDir()
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_CONFIG_LOCATION"))
+		is.NoErr(os.Unsetenv("ICY_CONFIG_LOCATION"))
 	})
 
 	// Test that we get data from the custom file location, and not from the data dir.
-	is.NoErr(os.Setenv("SOFT_SERVE_CONFIG_LOCATION", "testdata/config.yaml"))
-	is.NoErr(os.Setenv("SOFT_SERVE_DATA_PATH", td))
+	is.NoErr(os.Setenv("ICY_CONFIG_LOCATION", "testdata/config.yaml"))
+	is.NoErr(os.Setenv("ICY_DATA_PATH", td))
 	cfg := DefaultConfig()
 	is.NoErr(cfg.Parse())
 	is.Equal(cfg.Name, "Test server name")
 	// If we unset the custom location, then use the default location.
-	is.NoErr(os.Unsetenv("SOFT_SERVE_CONFIG_LOCATION"))
+	is.NoErr(os.Unsetenv("ICY_CONFIG_LOCATION"))
 	cfg = DefaultConfig()
 	is.Equal(cfg.Name, "Soft Serve")
 	// Test that if the custom config location doesn't exist, default to datapath config.
-	is.NoErr(os.Setenv("SOFT_SERVE_CONFIG_LOCATION", "testdata/config_nonexistent.yaml"))
+	is.NoErr(os.Setenv("ICY_CONFIG_LOCATION", "testdata/config_nonexistent.yaml"))
 	cfg = DefaultConfig()
 	is.Equal(cfg.Name, "Soft Serve")
 }
@@ -88,9 +88,9 @@ func TestDefaultRepoDisabledByDefault(t *testing.T) {
 
 func TestParseDefaultRepo(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_DEFAULT_REPO", "gitops"))
+	is.NoErr(os.Setenv("ICY_DEFAULT_REPO", "gitops"))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_DEFAULT_REPO"))
+		is.NoErr(os.Unsetenv("ICY_DEFAULT_REPO"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())
@@ -106,9 +106,9 @@ func TestParseDefaultRepoFromFile(t *testing.T) {
 
 func TestParseMultipleHeaders(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_HTTP_CORS_ALLOWED_HEADERS", "Accept,Accept-Language,User-Agent"))
+	is.NoErr(os.Setenv("ICY_HTTP_CORS_ALLOWED_HEADERS", "Accept,Accept-Language,User-Agent"))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_HTTP_CORS_ALLOWED_HEADERS"))
+		is.NoErr(os.Unsetenv("ICY_HTTP_CORS_ALLOWED_HEADERS"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())
@@ -121,9 +121,9 @@ func TestParseMultipleHeaders(t *testing.T) {
 
 func TestParseMultipleOrigins(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_HTTP_CORS_ALLOWED_ORIGINS", "http://example.com,https://example.com"))
+	is.NoErr(os.Setenv("ICY_HTTP_CORS_ALLOWED_ORIGINS", "http://example.com,https://example.com"))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_HTTP_CORS_ALLOWED_ORIGINS"))
+		is.NoErr(os.Unsetenv("ICY_HTTP_CORS_ALLOWED_ORIGINS"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())
@@ -136,9 +136,9 @@ func TestParseMultipleOrigins(t *testing.T) {
 
 func TestParseMultipleMethods(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_HTTP_CORS_ALLOWED_METHODS", "GET,POST,PUT"))
+	is.NoErr(os.Setenv("ICY_HTTP_CORS_ALLOWED_METHODS", "GET,POST,PUT"))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_HTTP_CORS_ALLOWED_METHODS"))
+		is.NoErr(os.Unsetenv("ICY_HTTP_CORS_ALLOWED_METHODS"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())
@@ -159,9 +159,9 @@ func TestAnonAccessEnvUnsetByDefault(t *testing.T) {
 
 func TestParseAnonAccessEnv(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_ANON_ACCESS", access.AdminAccess.String()))
+	is.NoErr(os.Setenv("ICY_ANON_ACCESS", access.AdminAccess.String()))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_ANON_ACCESS"))
+		is.NoErr(os.Unsetenv("ICY_ANON_ACCESS"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())
@@ -173,9 +173,9 @@ func TestParseAnonAccessEnv(t *testing.T) {
 // TextUnmarshaler, so it never reaches Validate as a bad value.
 func TestParseRejectsInvalidAnonAccess(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_ANON_ACCESS", "not-a-real-access-level"))
+	is.NoErr(os.Setenv("ICY_ANON_ACCESS", "not-a-real-access-level"))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_ANON_ACCESS"))
+		is.NoErr(os.Unsetenv("ICY_ANON_ACCESS"))
 	})
 	cfg := DefaultConfig()
 	err := cfg.ParseEnv()
@@ -192,9 +192,9 @@ func TestAllowKeylessEnvUnsetByDefault(t *testing.T) {
 
 func TestParseAllowKeylessEnvTrue(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_ALLOW_KEYLESS", "true"))
+	is.NoErr(os.Setenv("ICY_ALLOW_KEYLESS", "true"))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_ALLOW_KEYLESS"))
+		is.NoErr(os.Unsetenv("ICY_ALLOW_KEYLESS"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())
@@ -204,9 +204,9 @@ func TestParseAllowKeylessEnvTrue(t *testing.T) {
 
 func TestParseAllowKeylessEnvFalse(t *testing.T) {
 	is := is.New(t)
-	is.NoErr(os.Setenv("SOFT_SERVE_ALLOW_KEYLESS", "false"))
+	is.NoErr(os.Setenv("ICY_ALLOW_KEYLESS", "false"))
 	t.Cleanup(func() {
-		is.NoErr(os.Unsetenv("SOFT_SERVE_ALLOW_KEYLESS"))
+		is.NoErr(os.Unsetenv("ICY_ALLOW_KEYLESS"))
 	})
 	cfg := DefaultConfig()
 	is.NoErr(cfg.ParseEnv())

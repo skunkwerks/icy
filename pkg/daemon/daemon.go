@@ -272,10 +272,10 @@ func (d *GitDaemon) handleClient(conn net.Conn) {
 
 		// Environment variables to pass down to git hooks.
 		envs := []string{
-			"SOFT_SERVE_REPO_NAME=" + name,
-			"SOFT_SERVE_REPO_PATH=" + filepath.Join(reposDir, repo),
-			"SOFT_SERVE_HOST=" + host,
-			"SOFT_SERVE_LOG_PATH=" + filepath.Join(d.cfg.DataPath, "log", "hooks.log"),
+			"ICY_REPO_NAME=" + name,
+			"ICY_REPO_PATH=" + filepath.Join(reposDir, repo),
+			"ICY_HOST=" + host,
+			"ICY_LOG_PATH=" + filepath.Join(d.cfg.DataPath, "log", "hooks.log"),
 		}
 
 		// Add git protocol environment variable.

@@ -35,7 +35,7 @@ var (
 )
 
 func PrepareBuildCommand(binPath string) *exec.Cmd {
-	_, disableRaceSet := os.LookupEnv("SOFT_SERVE_DISABLE_RACE_CHECKS")
+	_, disableRaceSet := os.LookupEnv("ICY_DISABLE_RACE_CHECKS")
 	if disableRaceSet {
 		// don't add the -race flag
 		return exec.Command("go", "build", "-cover", "-o", binPath, filepath.Join("..", "cmd", "icy")) //nolint:noctx
@@ -139,15 +139,15 @@ func TestScript(t *testing.T) {
 			e.Setenv("SSH_KNOWN_CONFIG_FILE", filepath.Join(t.TempDir(), "config"))
 
 			// This is used to set up test specific configuration and http endpoints
-			e.Setenv("SOFT_SERVE_TESTRUN", "1")
+			e.Setenv("ICY_TESTRUN", "1")
 
 			// This will disable the default lipgloss renderer colors
-			e.Setenv("SOFT_SERVE_NO_COLOR", "1")
+			e.Setenv("ICY_NO_COLOR", "1")
 
 			// Soft Serve debug environment variables
 			for _, env := range []string{
-				"SOFT_SERVE_DEBUG",
-				"SOFT_SERVE_VERBOSE",
+				"ICY_DEBUG",
+				"ICY_VERBOSE",
 			} {
 				if v, ok := os.LookupEnv(env); ok {
 					e.Setenv(env, v)
@@ -167,7 +167,7 @@ func TestScript(t *testing.T) {
 			cfg.Stats.ListenAddr = statsListen
 			cfg.LFS.Enabled = true
 
-			// Parse os SOFT_SERVE environment variables
+			// Parse os ICY environment variables
 			if err := cfg.ParseEnv(); err != nil {
 				return err
 			}
@@ -588,7 +588,7 @@ func cmdEnsureServerNotRunning(ts *testscript.TestScript, neg bool, args []strin
 
 func cmdStopserver(ts *testscript.TestScript, neg bool, args []string) {
 	// stop the server
-	resp, err := http.DefaultClient.Head(fmt.Sprintf("%s/__stop", ts.Getenv("SOFT_SERVE_HTTP_PUBLIC_URL"))) //nolint:noctx
+	resp, err := http.DefaultClient.Head(fmt.Sprintf("%s/__stop", ts.Getenv("ICY_HTTP_PUBLIC_URL"))) //nolint:noctx
 	check(ts, err, neg)
 	resp.Body.Close()
 	time.Sleep(time.Second * 2) // Allow some time for the server to stop

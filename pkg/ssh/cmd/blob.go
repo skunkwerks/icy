@@ -17,7 +17,7 @@ func blobCommand() *cobra.Command {
 	var color bool
 	var raw bool
 	var noColor bool
-	if testrun, ok := os.LookupEnv("SOFT_SERVE_NO_COLOR"); ok && testrun == "1" {
+	if testrun, ok := os.LookupEnv("ICY_NO_COLOR"); ok && testrun == "1" {
 		noColor = true
 	}
 

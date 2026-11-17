@@ -7,7 +7,7 @@
 # once set, any user may import from those hosts and nobody may import from
 # any other.
 
-env SOFT_SERVE_SSH_CLIENT_ALLOWED_HOSTS=127.0.0.1:1
+env ICY_SSH_CLIENT_ALLOWED_HOSTS=127.0.0.1:1
 
 # start icy serve
 exec icy serve &

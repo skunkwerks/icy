@@ -49,8 +49,8 @@ jobs:
 
           # Collect integration tests coverage
           GOCOVERDIR=$PWD/coverage/int go test -failfast -race -timeout 5m -run=^TestScript ./...
-          SOFT_SERVE_DB_DRIVER=postgres \
-            SOFT_SERVE_DB_DATA_SOURCE=postgres://postgres:postgres@localhost/postgres?sslmode=disable \
+          ICY_DB_DRIVER=postgres \
+            ICY_DB_DATA_SOURCE=postgres://postgres:postgres@localhost/postgres?sslmode=disable \
             GOCOVERDIR=$PWD/coverage/int2 go test -failfast -race -timeout 5m -run=^TestScript ./...
 
           # Convert coverage data to legacy textfmt format to upload

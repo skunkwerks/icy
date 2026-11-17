@@ -64,9 +64,9 @@ stopserver
 
 -- test 3 --
 # allow cross-origin OPTIONS requests for example.com
-env SOFT_SERVE_HTTP_CORS_ALLOWED_ORIGINS="https://example.com"
-env SOFT_SERVE_HTTP_CORS_ALLOWED_METHODS="GET,OPTIONS"
-env SOFT_SERVE_HTTP_CORS_ALLOWED_HEADERS="Origin,Access-Control-Request-Method"
+env ICY_HTTP_CORS_ALLOWED_ORIGINS="https://example.com"
+env ICY_HTTP_CORS_ALLOWED_METHODS="GET,OPTIONS"
+env ICY_HTTP_CORS_ALLOWED_HEADERS="Origin,Access-Control-Request-Method"
 
 # restart icy serve
 exec icy serve &

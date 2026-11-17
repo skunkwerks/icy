@@ -66,7 +66,7 @@ var (
 )
 
 func init() {
-	if noColor, _ := strconv.ParseBool(os.Getenv("SOFT_SERVE_NO_COLOR")); noColor {
+	if noColor, _ := strconv.ParseBool(os.Getenv("ICY_NO_COLOR")); noColor {
 		common.DefaultColorProfile = colorprofile.NoTTY
 	}
 

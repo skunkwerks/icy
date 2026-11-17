@@ -1,7 +1,7 @@
 # vi: set ft=conf
 
-# Proves the zero-touch dev/local bootstrap: SOFT_SERVE_ANON_ACCESS and
-# SOFT_SERVE_ALLOW_KEYLESS grant a fully anonymous, keyless connection
+# Proves the zero-touch dev/local bootstrap: ICY_ANON_ACCESS and
+# ICY_ALLOW_KEYLESS grant a fully anonymous, keyless connection
 # admin-level access from the moment the server starts -- no `settings`
 # command, and no admin SSH key at all. This is the whole point of the
 # feature: standing up a throwaway, fully open server from zero for local
@@ -9,9 +9,9 @@
 
 # Override away the admin key the test harness normally provisions, and set
 # the two bootstrap overrides under test.
-env SOFT_SERVE_INITIAL_ADMIN_KEYS=
-env SOFT_SERVE_ANON_ACCESS=admin-access
-env SOFT_SERVE_ALLOW_KEYLESS=true
+env ICY_INITIAL_ADMIN_KEYS=
+env ICY_ANON_ACCESS=admin-access
+env ICY_ALLOW_KEYLESS=true
 
 # start icy serve
 exec icy serve &

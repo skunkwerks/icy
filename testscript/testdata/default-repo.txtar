@@ -1,6 +1,6 @@
 # vi: set ft=conf
 
-env SOFT_SERVE_DEFAULT_REPO=gitops
+env ICY_DEFAULT_REPO=gitops
 
 # start icy serve, with no prior `repo create` call for the default repo,
 # and no anon-access overrides -- just an ordinary seeded admin key

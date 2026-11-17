@@ -65,11 +65,11 @@ func TestMain(m *testing.M) {
 	testDaemon = d
 	go d.ListenAndServe() //nolint:errcheck
 	code := m.Run()
-	os.Unsetenv("SOFT_SERVE_DATA_PATH")
-	os.Unsetenv("SOFT_SERVE_GIT_MAX_CONNECTIONS")
-	os.Unsetenv("SOFT_SERVE_GIT_MAX_TIMEOUT")
-	os.Unsetenv("SOFT_SERVE_GIT_IDLE_TIMEOUT")
-	os.Unsetenv("SOFT_SERVE_GIT_LISTEN_ADDR")
+	os.Unsetenv("ICY_DATA_PATH")
+	os.Unsetenv("ICY_GIT_MAX_CONNECTIONS")
+	os.Unsetenv("ICY_GIT_MAX_TIMEOUT")
+	os.Unsetenv("ICY_GIT_IDLE_TIMEOUT")
+	os.Unsetenv("ICY_GIT_LISTEN_ADDR")
 	_ = d.Close()
 	_ = dbx.Close()
 	os.Exit(code)
