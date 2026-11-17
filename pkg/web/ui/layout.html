@@ -10,7 +10,7 @@
 </head>
 <body>
 <header class="top">
-<nav class="crumbs"><a class="site" href="/">{{.Site.Name}}</a>{{with .Repo}} <span class="sep">/</span> <a href="{{repoURL .Name}}">{{.Name}}</a>{{if ne .Visibility "public"}} <span class="badge">{{.Visibility}}</span>{{end}}{{if .Mirror}} <span class="badge">mirror</span>{{end}}{{end}}</nav>
+<nav class="crumbs"><a class="site" href="/">{{.Site.Name}}</a>{{with .Site.Version}} <span class="version">{{.}}</span>{{end}}{{with .Repo}} <span class="sep">/</span> <a href="{{repoURL .Name}}">{{.Name}}</a>{{if ne .Visibility "public"}} <span class="badge">{{.Visibility}}</span>{{end}}{{if .Mirror}} <span class="badge">mirror</span>{{end}}{{end}}</nav>
 <div class="who">{{if .User}}<span>{{.User}}</span> <form method="post" action="/-/logout"><button type="submit">Sign out</button></form>{{end}}</div>
 </header>
 {{with .Repo}}

@@ -84,11 +84,7 @@ func init() {
 		rootCmd.SetVersionTemplate(vt[:len(vt)-1] + " (" + CommitSHA[0:7] + ")\n")
 	}
 	if Version == "" {
-		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
-			Version = info.Main.Version
-		} else {
-			Version = "unknown (built from source)"
-		}
+		Version = buildInfoVersion()
 	}
 	rootCmd.Version = Version
 
@@ -138,4 +134,40 @@ func main() {
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
+}
+
+// buildInfoVersion is the version of a build made without ldflags, such as
+// a plain go build or go install. Release builds, make oci and goreleaser
+// all set Version through ldflags instead. Go records the module version
+// for go install of a tagged release, and the git revision when it builds
+// inside a checkout.
+func buildInfoVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown"
+	}
+	if v := info.Main.Version; v != "" && v != "(devel)" {
+		return v
+	}
+	var rev string
+	var dirty bool
+	for _, s := range info.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			rev = s.Value
+		case "vcs.modified":
+			dirty = s.Value == "true"
+		}
+	}
+	if rev == "" {
+		return "unknown"
+	}
+	if len(rev) > 7 {
+		rev = rev[:7]
+	}
+	v := "devel-" + rev
+	if dirty {
+		v += "-dirty"
+	}
+	return v
 }

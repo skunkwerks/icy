@@ -24,6 +24,7 @@ import (
 	"github.com/skunkwerks/icy/pkg/proto"
 	"github.com/skunkwerks/icy/pkg/store"
 	"github.com/skunkwerks/icy/pkg/utils"
+	"github.com/skunkwerks/icy/pkg/version"
 )
 
 // uiFixture is a server with four repositories owned by "owner":
@@ -211,6 +212,14 @@ func TestUIHome(t *testing.T) {
 	is.True(strings.Contains(f.get("/", f.login(t, f.owner)).Body.String(), `href="/privhid"`))
 	is.True(!strings.Contains(f.get("/", f.login(t, f.stranger)).Body.String(), "privhid"))
 	is.True(!strings.Contains(f.get("/", nil).Body.String(), "privhid"))
+
+	// The front page header shows the version icy was built from. Other
+	// pages leave it out.
+	old := version.Version
+	version.Version = "v9.9.9-1-gabcdef0"
+	t.Cleanup(func() { version.Version = old })
+	is.True(strings.Contains(f.get("/", nil).Body.String(), `<span class="version">v9.9.9-1-gabcdef0</span>`))
+	is.True(!strings.Contains(f.get("/pub", nil).Body.String(), "v9.9.9-1-gabcdef0"))
 
 	// go-get on the front page is not the front page.
 	is.Equal(f.get("/?go-get=1", nil).Code, http.StatusNotFound)

@@ -22,6 +22,7 @@ import (
 	"github.com/skunkwerks/icy/pkg/config"
 	"github.com/skunkwerks/icy/pkg/proto"
 	"github.com/skunkwerks/icy/pkg/utils"
+	"github.com/skunkwerks/icy/pkg/version"
 )
 
 // The web UI is a read-only, server-rendered repository browser.
@@ -247,6 +248,9 @@ type siteInfo struct {
 	Description string
 	LoginCmd    string
 	CSSVersion  string
+	// Version is the git version icy was built from. Only the front
+	// page sets it, so it shows in that page's header.
+	Version string
 }
 
 // pageData is what every page template receives.
@@ -366,6 +370,7 @@ func (ui *webUI) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := ui.newPage(r, "")
+	p.Site.Version = version.Version
 	p.Body = struct{ Repos []homeRepo }{rows}
 	ui.render(w, r, http.StatusOK, "home", p)
 }

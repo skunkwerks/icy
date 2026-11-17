@@ -66,6 +66,7 @@ header.top {
 }
 header.top .site { font-weight: 600; }
 header.top .sep { color: var(--muted); }
+header.top .version { color: var(--muted); font-size: .85rem; }
 .who { display: flex; gap: .5rem; align-items: center; color: var(--muted); }
 .who form { margin: 0; }
 button {
