@@ -53,7 +53,7 @@ jobs:
     name: FreeBSD
     steps:
       - name: Run tests in a FreeBSD VM
-        uses: acj/freebsd-firecracker-action@v0.12.0
+        uses: acj/freebsd-firecracker-action@v0.13.0
         with:
           disk-size: 8G
           run-in-vm: |
