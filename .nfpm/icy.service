@@ -1,22 +1,22 @@
 [Unit]
-Description=Soft Serve git server 🍦
-Documentation=https://github.com/charmbracelet/soft-serve
+Description=Icy git server 🍦
+Documentation=https://github.com/skunkwerks/icy
 Requires=network-online.target
 After=network-online.target
 
 [Service]
 Type=simple
-User=soft-serve
-Group=soft-serve
+User=icy
+Group=icy
 Restart=always
 RestartSec=1
 ExecStart=/usr/bin/icy serve
-Environment=ICY_DATA_PATH=/var/lib/soft-serve
-EnvironmentFile=-/etc/soft-serve.conf
-WorkingDirectory=/var/lib/soft-serve
+Environment=ICY_DATA_PATH=/var/lib/icy
+EnvironmentFile=-/etc/icy.conf
+WorkingDirectory=/var/lib/icy
 
 # Hardening
-ReadWritePaths=/var/lib/soft-serve
+ReadWritePaths=/var/lib/icy
 UMask=0027
 NoNewPrivileges=true
 LimitNOFILE=1048576

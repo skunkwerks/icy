@@ -9,4 +9,4 @@ fi
 systemctl daemon-reload
 systemctl reset-failed
 
-echo "WARN: the soft-serve user/group and /var/lib/soft-serve directory were not removed"
+echo "WARN: the icy user/group and /var/lib/icy directory were not removed"
