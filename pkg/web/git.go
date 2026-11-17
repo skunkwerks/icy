@@ -112,8 +112,11 @@ func GitController(_ context.Context, r *mux.Router) {
 		r.Handle(basePrefix+route.path, withParams(route))
 	}
 
-	// Handle go-get
-	r.Handle(basePrefix, withParams(withCaller(http.HandlerFunc(GoGetHandler)))).Methods(http.MethodGet)
+	// Handle go-get. Only ?go-get=1 requests match, so other GETs fall
+	// through to the web UI or the final not-found route.
+	r.Handle(basePrefix, withParams(withCaller(http.HandlerFunc(GoGetHandler)))).
+		Methods(http.MethodGet).
+		MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool { return isGoGet(req) })
 }
 
 var gitRoutes = []GitRoute{

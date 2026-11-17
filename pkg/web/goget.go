@@ -37,6 +37,11 @@ Redirecting to docs at <a href="https://godoc.org/{{ .ImportRoot }}/{{ .Repo }}"
 </html>
 `))
 
+// isGoGet reports whether r is a go-get discovery request.
+func isGoGet(r *http.Request) bool {
+	return r.URL.Query().Get("go-get") == "1"
+}
+
 // GoGetHandler handles go get requests.
 func GoGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
