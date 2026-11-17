@@ -71,7 +71,7 @@ func (d *Backend) CreateRepository(ctx context.Context, name string, user proto.
 	}
 
 	name = utils.SanitizeRepo(name)
-	if err := utils.ValidateRepo(name); err != nil {
+	if err := utils.ValidateNewRepo(name); err != nil {
 		return nil, err
 	}
 
@@ -203,7 +203,7 @@ func (d *Backend) ImportRepository(_ context.Context, name string, user proto.Us
 	}
 
 	name = utils.SanitizeRepo(name)
-	if err := utils.ValidateRepo(name); err != nil {
+	if err := utils.ValidateNewRepo(name); err != nil {
 		return nil, err
 	}
 
@@ -443,13 +443,15 @@ func (d *Backend) RenameRepository(ctx context.Context, oldName string, newName 
 		return err
 	}
 
+	// The old name may predate a reserved segment, so it only needs to be
+	// a valid name. The new one is chosen now and must avoid them.
 	oldName = utils.SanitizeRepo(oldName)
 	if err := utils.ValidateRepo(oldName); err != nil {
 		return err
 	}
 
 	newName = utils.SanitizeRepo(newName)
-	if err := utils.ValidateRepo(newName); err != nil {
+	if err := utils.ValidateNewRepo(newName); err != nil {
 		return err
 	}
 
