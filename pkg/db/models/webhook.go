@@ -42,3 +42,30 @@ type WebhookDelivery struct {
 	ResponseBody    string         `db:"response_body"`
 	CreatedAt       time.Time      `db:"created_at"`
 }
+
+// WebhookQueueItem is a webhook delivery waiting to be sent. Its ID is the
+// delivery ID sent in the X-Icy-Delivery header, and stays the same across
+// retries.
+type WebhookQueueItem struct {
+	ID          uuid.UUID `db:"id"`
+	WebhookID   int64     `db:"webhook_id"`
+	Event       int       `db:"event"`
+	ContentType int       `db:"content_type"`
+	RequestBody string    `db:"request_body"`
+	// Attempts is how many times sending has been started.
+	Attempts int `db:"attempts"`
+	// NextAttemptAt is when the delivery is next due, in Unix seconds.
+	NextAttemptAt int64 `db:"next_attempt_at"`
+	// LockedUntil is when a worker's claim on the delivery runs out, in
+	// Unix seconds.
+	LockedUntil int64     `db:"locked_until"`
+	CreatedAt   time.Time `db:"created_at"`
+}
+
+// QueuedWebhookDelivery is a due queue item with the webhook it goes to.
+type QueuedWebhookDelivery struct {
+	WebhookQueueItem
+	URL    string `db:"url"`
+	Secret string `db:"secret"`
+	Active bool   `db:"active"`
+}

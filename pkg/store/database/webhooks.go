@@ -75,6 +75,11 @@ func (*webhookStore) DeleteWebhookDeliveryByID(ctx context.Context, h db.Handler
 
 // DeleteWebhookEventsByWebhookID implements store.WebhookStore.
 func (*webhookStore) DeleteWebhookEventsByID(ctx context.Context, h db.Handler, ids []int64) error {
+	// sqlx.In refuses an empty list, and an update that keeps every event
+	// has nothing to delete.
+	if len(ids) == 0 {
+		return nil
+	}
 	query, args, err := sqlx.In(`DELETE FROM webhook_events WHERE id IN (?);`, ids)
 	if err != nil {
 		return err
@@ -151,7 +156,7 @@ func (*webhookStore) GetWebhooksByRepoIDWhereEvent(ctx context.Context, h db.Han
 
 // ListWebhookDeliveriesByWebhookID implements store.WebhookStore.
 func (*webhookStore) ListWebhookDeliveriesByWebhookID(ctx context.Context, h db.Handler, webhookID int64) ([]models.WebhookDelivery, error) {
-	query := h.Rebind(`SELECT id, response_status, event FROM webhook_deliveries WHERE webhook_id = ?;`)
+	query := h.Rebind(`SELECT id, response_status, event, created_at FROM webhook_deliveries WHERE webhook_id = ? ORDER BY created_at;`)
 	var whds []models.WebhookDelivery
 	err := h.SelectContext(ctx, &whds, query, webhookID)
 	return whds, err
@@ -162,4 +167,71 @@ func (*webhookStore) UpdateWebhookByID(ctx context.Context, h db.Handler, repoID
 	query := h.Rebind(`UPDATE webhooks SET url = ?, secret = ?, content_type = ?, active = ?, updated_at = CURRENT_TIMESTAMP WHERE repo_id = ? AND id = ?;`)
 	_, err := h.ExecContext(ctx, query, url, secret, contentType, active, repoID, id)
 	return err
+}
+
+// CreateWebhookQueueItem implements store.WebhookStore.
+func (*webhookStore) CreateWebhookQueueItem(ctx context.Context, h db.Handler, id uuid.UUID, webhookID int64, event int, contentType int, requestBody string, nextAttemptAt int64) error {
+	query := h.Rebind(`INSERT INTO webhook_queue (id, webhook_id, event, content_type, request_body, next_attempt_at)
+			VALUES (?, ?, ?, ?, ?, ?);`)
+	_, err := h.ExecContext(ctx, query, id, webhookID, event, contentType, requestBody, nextAttemptAt)
+	return err
+}
+
+// ListDueWebhookQueueItems implements store.WebhookStore.
+func (*webhookStore) ListDueWebhookQueueItems(ctx context.Context, h db.Handler, now int64, limit int) ([]models.QueuedWebhookDelivery, error) {
+	query := h.Rebind(`SELECT webhook_queue.*, webhooks.url, webhooks.secret, webhooks.active
+			FROM webhook_queue
+			INNER JOIN webhooks ON webhooks.id = webhook_queue.webhook_id
+			WHERE webhook_queue.next_attempt_at <= ? AND webhook_queue.locked_until <= ?
+			ORDER BY webhook_queue.next_attempt_at, webhook_queue.created_at
+			LIMIT ?;`)
+	var items []models.QueuedWebhookDelivery
+	err := h.SelectContext(ctx, &items, query, now, now, limit)
+	return items, err
+}
+
+// ClaimWebhookQueueItem implements store.WebhookStore.
+func (*webhookStore) ClaimWebhookQueueItem(ctx context.Context, h db.Handler, id uuid.UUID, attempts int, now int64, lockUntil int64) (bool, error) {
+	// The WHERE clause repeats every condition the caller saw, so of two
+	// workers racing for the same row only one update matches.
+	query := h.Rebind(`UPDATE webhook_queue SET attempts = attempts + 1, locked_until = ?
+			WHERE id = ? AND attempts = ? AND next_attempt_at <= ? AND locked_until <= ?;`)
+	res, err := h.ExecContext(ctx, query, lockUntil, id, attempts, now, now)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return n == 1, nil
+}
+
+// RescheduleWebhookQueueItem implements store.WebhookStore.
+func (*webhookStore) RescheduleWebhookQueueItem(ctx context.Context, h db.Handler, id uuid.UUID, nextAttemptAt int64) error {
+	query := h.Rebind(`UPDATE webhook_queue SET next_attempt_at = ?, locked_until = 0 WHERE id = ?;`)
+	_, err := h.ExecContext(ctx, query, nextAttemptAt, id)
+	return err
+}
+
+// ReleaseWebhookQueueItem implements store.WebhookStore.
+func (*webhookStore) ReleaseWebhookQueueItem(ctx context.Context, h db.Handler, id uuid.UUID) error {
+	query := h.Rebind(`UPDATE webhook_queue SET attempts = attempts - 1, locked_until = 0 WHERE id = ? AND attempts > 0;`)
+	_, err := h.ExecContext(ctx, query, id)
+	return err
+}
+
+// DeleteWebhookQueueItem implements store.WebhookStore.
+func (*webhookStore) DeleteWebhookQueueItem(ctx context.Context, h db.Handler, id uuid.UUID) error {
+	query := h.Rebind(`DELETE FROM webhook_queue WHERE id = ?;`)
+	_, err := h.ExecContext(ctx, query, id)
+	return err
+}
+
+// ListWebhookQueueItemsByWebhookID implements store.WebhookStore.
+func (*webhookStore) ListWebhookQueueItemsByWebhookID(ctx context.Context, h db.Handler, webhookID int64) ([]models.WebhookQueueItem, error) {
+	query := h.Rebind(`SELECT * FROM webhook_queue WHERE webhook_id = ? ORDER BY created_at;`)
+	var items []models.WebhookQueueItem
+	err := h.SelectContext(ctx, &items, query, webhookID)
+	return items, err
 }
