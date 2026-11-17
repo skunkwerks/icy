@@ -70,6 +70,8 @@ var (
 
 func init() {
 	Command.AddCommand(
+		exportStateCmd(),
+		checkStateCmd(),
 		syncHooksCmd,
 		migrateCmd,
 		rollbackCmd,
