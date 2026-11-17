@@ -17,14 +17,14 @@ import (
 )
 
 var tuiSessionCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-	Namespace: "soft_serve",
+	Namespace: "icy",
 	Subsystem: "ssh",
 	Name:      "tui_session_total",
 	Help:      "The total number of TUI sessions",
 }, []string{"repo", "term"})
 
 var tuiSessionDuration = promauto.NewCounterVec(prometheus.CounterOpts{
-	Namespace: "soft_serve",
+	Namespace: "icy",
 	Subsystem: "ssh",
 	Name:      "tui_session_seconds_total",
 	Help:      "The total time spent in TUI sessions",

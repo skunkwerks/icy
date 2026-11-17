@@ -24,14 +24,14 @@ import (
 
 var (
 	uploadPackGitCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "soft_serve",
+		Namespace: "icy",
 		Subsystem: "git",
 		Name:      "git_upload_pack_total",
 		Help:      "The total number of git-upload-pack requests",
 	}, []string{"repo"})
 
 	uploadArchiveGitCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "soft_serve",
+		Namespace: "icy",
 		Subsystem: "git",
 		Name:      "git_upload_archive_total",
 		Help:      "The total number of git-upload-archive requests",

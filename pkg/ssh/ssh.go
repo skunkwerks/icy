@@ -25,14 +25,14 @@ import (
 
 var (
 	publicKeyCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "soft_serve",
+		Namespace: "icy",
 		Subsystem: "ssh",
 		Name:      "public_key_auth_total",
 		Help:      "The total number of public key auth requests",
 	}, []string{"allowed"})
 
 	keyboardInteractiveCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "soft_serve",
+		Namespace: "icy",
 		Subsystem: "ssh",
 		Name:      "keyboard_interactive_auth_total",
 		Help:      "The total number of keyboard interactive auth requests",

@@ -60,7 +60,7 @@ func (g GitRoute) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 var (
 	//nolint:revive
 	gitHttpReceiveCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "soft_serve",
+		Namespace: "icy",
 		Subsystem: "http",
 		Name:      "git_receive_pack_total",
 		Help:      "The total number of git push requests",
@@ -68,7 +68,7 @@ var (
 
 	//nolint:revive
 	gitHttpUploadCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "soft_serve",
+		Namespace: "icy",
 		Subsystem: "http",
 		Name:      "git_upload_pack_total",
 		Help:      "The total number of git fetch/pull requests",
