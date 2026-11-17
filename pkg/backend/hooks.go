@@ -68,8 +68,10 @@ func (d *Backend) Update(ctx context.Context, _ io.Writer, _ io.Writer, repo str
 		return
 	}
 
-	// TODO: run this async
-	// This would probably need something like an RPC server to communicate with the hook process.
+	// SendEvent only renders the payloads and queues them, so a slow or
+	// broken receiver does not hold up the push. This hook runs in a
+	// short-lived process, and the server's webhook worker sends the queued
+	// deliveries.
 	if git.IsZeroHash(arg.OldSha) || git.IsZeroHash(arg.NewSha) {
 		wh, err := webhook.NewBranchTagEvent(ctx, user, r, arg.RefName, arg.OldSha, arg.NewSha)
 		if err != nil {

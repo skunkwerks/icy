@@ -1,0 +1,43 @@
+# vi: set ft=conf
+
+# Webhooks to an allowed private network are sent after the push returns.
+# The receiver runs on loopback in the test process, so no internet is
+# needed.
+
+# allow loopback only, then start icy serve
+env ICY_WEBHOOK_ALLOWED_NETWORKS=127.0.0.1
+exec icy serve &
+ensureserverrunning SSH_PORT
+
+icy repo create repo-ci
+stderr 'Created repository repo-ci.*'
+
+# addresses outside the allowlist are still refused
+! icy repo webhook create repo-ci http://127.0.0.2:8080/hook -e push
+! icy repo webhook create repo-ci http://10.0.0.1/hook -e push
+! icy repo webhook create repo-ci http://169.254.169.254/latest/meta-data/ -e push
+! icy repo webhook create repo-ci http://localhost:8080/hook -e push
+
+# the allowed address is accepted
+new-local-webhook WH_LOCAL hooks.log
+icy repo webhook create repo-ci $WH_LOCAL -e push -e branch_tag_create --secret s3cret
+icy repo webhook list repo-ci
+stdout '1.*127.0.0.1.*'
+
+# push, then wait for the server to send the queued deliveries
+git clone ssh://localhost:$SSH_PORT/repo-ci repo-ci
+mkfile ./repo-ci/README.md 'foobar'
+git -C repo-ci add -A
+git -C repo-ci commit -m 'first'
+git -C repo-ci push origin HEAD
+waitdelivery repo-ci 1 '✅.*push.*'
+waitdelivery repo-ci 1 '✅.*branch_tag_create.*'
+
+# the receiver saw both events
+readfile hooks.log
+stdout '^push [0-9a-f-]{36}$'
+stdout '^branch_tag_create [0-9a-f-]{36}$'
+
+# stop the server
+[windows] stopserver
+[windows] ! stderr .

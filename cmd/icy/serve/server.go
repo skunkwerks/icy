@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
 	"charm.land/log/v2"
 
@@ -22,6 +24,7 @@ import (
 	"github.com/skunkwerks/icy/pkg/stats"
 	"github.com/skunkwerks/icy/pkg/utils"
 	"github.com/skunkwerks/icy/pkg/web"
+	"github.com/skunkwerks/icy/pkg/webhook"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -36,9 +39,15 @@ type Server struct {
 	Config      *config.Config
 	Backend     *backend.Backend
 	DB          *db.DB
+	Webhooks    *webhook.Worker
 
 	logger *log.Logger
 	ctx    context.Context
+
+	webhooksMu     sync.Mutex
+	webhooksStop   context.CancelFunc
+	webhooksDone   chan struct{}
+	webhooksClosed bool
 }
 
 // NewServer returns a new *Server configured to serve Icy. The SSH
@@ -71,6 +80,9 @@ func NewServer(ctx context.Context) (*Server, error) {
 	}
 
 	srv.Cron = sched
+
+	// Hooks only queue webhook deliveries. This worker sends them.
+	srv.Webhooks = webhook.NewWorker(ctx)
 
 	ensureDefaultRepo(ctx, cfg, be, logger)
 
@@ -234,11 +246,55 @@ func (s *Server) Start() error {
 		s.Cron.Start()
 		return nil
 	})
+
+	s.startWebhooks()
+
 	return errg.Wait()
+}
+
+// startWebhooks runs the webhook worker until stopWebhooks is called.
+func (s *Server) startWebhooks() {
+	if s.Webhooks == nil {
+		return
+	}
+	ctx, cancel := context.WithCancel(s.ctx)
+	done := make(chan struct{})
+	s.webhooksMu.Lock()
+	if s.webhooksClosed {
+		s.webhooksMu.Unlock()
+		cancel()
+		return
+	}
+	s.webhooksStop, s.webhooksDone = cancel, done
+	s.webhooksMu.Unlock()
+
+	s.logger.Print("Starting webhook worker")
+	go func() {
+		defer close(done)
+		s.Webhooks.Run(ctx)
+	}()
+}
+
+// stopWebhooks stops the webhook worker and waits for deliveries in flight,
+// or until ctx is done. Deliveries cut off are sent again on the next start.
+func (s *Server) stopWebhooks(ctx context.Context) {
+	s.webhooksMu.Lock()
+	s.webhooksClosed = true
+	stop, done := s.webhooksStop, s.webhooksDone
+	s.webhooksMu.Unlock()
+	if stop == nil {
+		return
+	}
+	stop()
+	select {
+	case <-done:
+	case <-ctx.Done():
+	}
 }
 
 // Shutdown lets the server gracefully shutdown.
 func (s *Server) Shutdown(ctx context.Context) error {
+	s.stopWebhooks(ctx)
 	errg, ctx := errgroup.WithContext(ctx)
 	errg.Go(func() error {
 		return s.GitDaemon.Shutdown(ctx)
@@ -265,6 +321,10 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 // Close closes the SSH server.
 func (s *Server) Close() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s.stopWebhooks(ctx)
+
 	var errg errgroup.Group
 	errg.Go(s.GitDaemon.Close)
 	errg.Go(s.HTTPServer.Close)

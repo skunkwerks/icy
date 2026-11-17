@@ -30,7 +30,7 @@ func TestSetPrivateWebhookOnlyOnChange(t *testing.T) {
 	repo, err := be.CreateRepository(ctx, "repo", nil, proto.RepositoryOptions{})
 	is.NoErr(err)
 
-	// Deliveries to this address fail fast, but are still recorded.
+	// Events are queued for the webhook worker, so count the queue.
 	var hookID int64
 	is.NoErr(be.db.TransactionContext(ctx, func(tx *db.Tx) error {
 		hookID, err = be.store.CreateWebhook(ctx, tx, repo.ID(), "http://127.0.0.1:1/", "", int(webhook.ContentTypeJSON), true)
@@ -41,7 +41,7 @@ func TestSetPrivateWebhookOnlyOnChange(t *testing.T) {
 	}))
 
 	deliveries := func() int {
-		ds, err := be.store.ListWebhookDeliveriesByWebhookID(ctx, be.db, hookID)
+		ds, err := be.store.ListWebhookQueueItemsByWebhookID(ctx, be.db, hookID)
 		is.NoErr(err)
 		return len(ds)
 	}

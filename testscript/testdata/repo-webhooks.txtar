@@ -25,8 +25,8 @@ git -C repo-123 add -A
 git -C repo-123 commit -m 'first'
 git -C repo-123 push origin HEAD
 
-# list webhook deliveries
-icy repo webhook deliver list repo-123 1
+# deliveries are sent by the server after the push returns, so wait for it
+waitdelivery repo-123 1 '✅.*push.*'
 stdout '✅.*push.*'
 
 # stop the server

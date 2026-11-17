@@ -12,10 +12,12 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -110,6 +112,8 @@ func TestScript(t *testing.T) {
 			"readfile":               cmdReadfile,
 			"dos2unix":               cmdDos2Unix,
 			"new-webhook":            cmdNewWebhook,
+			"new-local-webhook":      cmdNewLocalWebhook,
+			"waitdelivery":           cmdWaitDelivery(admin1.Signer()),
 			"ensureserverrunning":    cmdEnsureServerRunning,
 			"ensureservernotrunning": cmdEnsureServerNotRunning,
 			"stopserver":             cmdStopserver,
@@ -453,6 +457,77 @@ func cmdNewWebhook(ts *testscript.TestScript, neg bool, args []string) {
 		lastErr = err
 	}
 	check(ts, lastErr, neg)
+}
+
+// cmdNewLocalWebhook starts a webhook receiver on 127.0.0.1 for the length
+// of the script and sets the named variable to its URL. It answers 200 and
+// appends each request's X-Icy-Event and X-Icy-Delivery headers to the log
+// file named by the second argument.
+//
+// The server refuses loopback unless webhook.allowed_networks lists it, so
+// scripts using this set ICY_WEBHOOK_ALLOWED_NETWORKS before starting it.
+func cmdNewLocalWebhook(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: new-local-webhook <env-name> <log-file>")
+	}
+	logPath := ts.MkAbs(args[1])
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(io.Discard, r.Body) //nolint:errcheck
+		f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+		if err == nil {
+			fmt.Fprintf(f, "%s %s\n", r.Header.Get("X-Icy-Event"), r.Header.Get("X-Icy-Delivery"))
+			f.Close() //nolint:errcheck
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	ts.Defer(srv.Close)
+	ts.Setenv(args[0], srv.URL+"/hook")
+}
+
+// cmdWaitDelivery runs "repo webhook deliveries list REPO ID" as an admin
+// until a line of its output matches the pattern, or fails after 30
+// seconds. Webhooks are sent by a worker in the server after the push has
+// returned, so scripts wait for the delivery to show up.
+func cmdWaitDelivery(key ssh.Signer) func(ts *testscript.TestScript, neg bool, args []string) {
+	return func(ts *testscript.TestScript, neg bool, args []string) {
+		if len(args) != 3 {
+			ts.Fatalf("usage: waitdelivery <repo> <webhook-id> <pattern>")
+		}
+		re, err := regexp.Compile(args[2])
+		ts.Check(err)
+
+		var out bytes.Buffer
+		deadline := time.Now().Add(30 * time.Second)
+		for {
+			out.Reset()
+			cli, err := ssh.Dial(
+				"tcp",
+				net.JoinHostPort("localhost", ts.Getenv("SSH_PORT")),
+				&ssh.ClientConfig{
+					User:            "admin",
+					Auth:            []ssh.AuthMethod{ssh.PublicKeys(key)},
+					HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+				},
+			)
+			ts.Check(err)
+			sess, err := cli.NewSession()
+			ts.Check(err)
+			sess.Stdout = &out
+			sess.Stderr = &out
+			runErr := sess.Run(fmt.Sprintf("repo webhook deliveries list %s %s", args[0], args[1]))
+			sess.Close() //nolint:errcheck
+			cli.Close()  //nolint:errcheck
+
+			if runErr == nil && re.Match(out.Bytes()) {
+				ts.Stdout().Write(out.Bytes()) //nolint:errcheck
+				return
+			}
+			if time.Now().After(deadline) {
+				ts.Fatalf("no delivery matching %q after 30 seconds, last output:\n%s", args[2], out.String())
+			}
+			time.Sleep(250 * time.Millisecond)
+		}
+	}
 }
 
 // newWebhookSiteToken asks webhook.site for a new endpoint and returns its UUID.

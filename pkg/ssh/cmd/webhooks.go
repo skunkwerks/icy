@@ -307,6 +307,21 @@ func webhookDeliveriesListCommand() *cobra.Command {
 					humanize.Time(d.CreatedAt),
 				)
 			}
+
+			// Deliveries still in the queue: not yet sent, or waiting
+			// for a retry. A retry shares the ID of its first attempt.
+			pending, err := be.ListPendingWebhookDeliveries(ctx, repo, id)
+			if err != nil {
+				return err
+			}
+			for _, p := range pending {
+				table = table.Row(
+					"⏳",
+					p.ID.String(),
+					p.Event.String(),
+					humanize.Time(p.CreatedAt),
+				)
+			}
 			cmd.Println(table)
 			return nil
 		},

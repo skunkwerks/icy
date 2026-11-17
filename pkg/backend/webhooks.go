@@ -2,17 +2,25 @@ package backend
 
 import (
 	"context"
-	"encoding/json"
 
-	"charm.land/log/v2"
 	"github.com/google/uuid"
 	"github.com/skunkwerks/icy/pkg/db"
 	"github.com/skunkwerks/icy/pkg/db/models"
 	"github.com/skunkwerks/icy/pkg/proto"
+	"github.com/skunkwerks/icy/pkg/ssrf"
 	"github.com/skunkwerks/icy/pkg/store"
 	"github.com/skunkwerks/icy/pkg/utils"
 	"github.com/skunkwerks/icy/pkg/webhook"
 )
+
+// webhookAllowlist returns the private networks the operator lets webhooks
+// reach.
+func (b *Backend) webhookAllowlist() ssrf.AllowedNetworks {
+	if b.cfg == nil {
+		return nil
+	}
+	return b.cfg.Webhook.Allowlist()
+}
 
 // CreateWebhook creates a webhook for a repository.
 func (b *Backend) CreateWebhook(ctx context.Context, repo proto.Repository, url string, contentType webhook.ContentType, secret string, events []webhook.Event, active bool) error {
@@ -21,7 +29,7 @@ func (b *Backend) CreateWebhook(ctx context.Context, repo proto.Repository, url 
 	url = utils.Sanitize(url)
 
 	// Validate webhook URL to prevent SSRF attacks
-	if err := webhook.ValidateWebhookURL(url); err != nil {
+	if err := webhook.ValidateWebhookURLWithAllowlist(url, b.webhookAllowlist()); err != nil {
 		return err //nolint:wrapcheck
 	}
 
@@ -126,7 +134,7 @@ func (b *Backend) UpdateWebhook(ctx context.Context, repo proto.Repository, id i
 	datastore := store.FromContext(ctx)
 
 	// Validate webhook URL to prevent SSRF attacks
-	if err := webhook.ValidateWebhookURL(url); err != nil {
+	if err := webhook.ValidateWebhookURLWithAllowlist(url, b.webhookAllowlist()); err != nil {
 		return err
 	}
 
@@ -237,7 +245,8 @@ func (b *Backend) ListWebhookDeliveries(ctx context.Context, repo proto.Reposito
 	return ds, nil
 }
 
-// RedeliverWebhookDelivery redelivers a webhook delivery.
+// RedeliverWebhookDelivery queues a recorded delivery to be sent again. The
+// webhook worker in the server sends it.
 func (b *Backend) RedeliverWebhookDelivery(ctx context.Context, repo proto.Repository, id int64, delID uuid.UUID) error {
 	dbx := db.FromContext(ctx)
 	datastore := store.FromContext(ctx)
@@ -248,7 +257,6 @@ func (b *Backend) RedeliverWebhookDelivery(ctx context.Context, repo proto.Repos
 		var err error
 		wh, err = datastore.GetWebhookByID(ctx, tx, repo.ID(), id)
 		if err != nil {
-			log.Errorf("error getting webhook: %v", err)
 			return db.WrapError(err)
 		}
 
@@ -262,15 +270,36 @@ func (b *Backend) RedeliverWebhookDelivery(ctx context.Context, repo proto.Repos
 		return db.WrapError(err)
 	}
 
-	log.Infof("redelivering webhook delivery %s for webhook %d\n\n%s\n\n", delID, id, delivery.RequestBody)
+	b.logger.Info("redelivering webhook delivery", "webhook", id, "delivery", delID)
 
-	var payload json.RawMessage
-	if err := json.Unmarshal([]byte(delivery.RequestBody), &payload); err != nil {
-		log.Errorf("error unmarshaling webhook payload: %v", err)
-		return err
+	return webhook.Redeliver(ctx, wh, delivery)
+}
+
+// ListPendingWebhookDeliveries lists the queued deliveries of a webhook
+// belonging to the given repository: those not yet sent, and those waiting
+// for a retry.
+func (b *Backend) ListPendingWebhookDeliveries(ctx context.Context, repo proto.Repository, id int64) ([]webhook.Pending, error) {
+	dbx := db.FromContext(ctx)
+	datastore := store.FromContext(ctx)
+
+	var items []models.WebhookQueueItem
+	if err := dbx.TransactionContext(ctx, func(tx *db.Tx) error {
+		if _, err := datastore.GetWebhookByID(ctx, tx, repo.ID(), id); err != nil {
+			return db.WrapError(err)
+		}
+
+		var err error
+		items, err = datastore.ListWebhookQueueItemsByWebhookID(ctx, tx, id)
+		return db.WrapError(err)
+	}); err != nil {
+		return nil, db.WrapError(err)
 	}
 
-	return webhook.SendWebhook(ctx, wh, webhook.Event(delivery.Event), payload)
+	ps := make([]webhook.Pending, len(items))
+	for i, it := range items {
+		ps[i] = webhook.Pending{WebhookQueueItem: it, Event: webhook.Event(it.Event)}
+	}
+	return ps, nil
 }
 
 // WebhookDelivery returns a webhook delivery for a webhook belonging to the

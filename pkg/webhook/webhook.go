@@ -1,16 +1,12 @@
 package webhook
 
 import (
-	"bytes"
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
+	"strings"
+	"time"
 
 	"github.com/google/go-querystring/query"
 	"github.com/google/uuid"
@@ -21,7 +17,6 @@ import (
 	"github.com/skunkwerks/icy/pkg/ssrf"
 	"github.com/skunkwerks/icy/pkg/store"
 	"github.com/skunkwerks/icy/pkg/utils"
-	"github.com/skunkwerks/icy/pkg/version"
 )
 
 // Hook is a repository webhook.
@@ -37,98 +32,66 @@ type Delivery struct {
 	Event Event
 }
 
-// secureHTTPClient is an HTTP client with SSRF protection.
-var secureHTTPClient = ssrf.NewSecureClient()
-
-// do sends a webhook.
-// Caller must close the returned body.
-func do(ctx context.Context, url string, method string, headers http.Header, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header = headers
-	res, err := secureHTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+// Pending is a webhook delivery that is queued and not yet finished.
+type Pending struct {
+	models.WebhookQueueItem
+	Event Event
 }
 
-// SendWebhook sends a webhook event.
-func SendWebhook(ctx context.Context, w models.Webhook, event Event, payload interface{}) error {
-	var buf bytes.Buffer
-	dbx := db.FromContext(ctx)
-	datastore := store.FromContext(ctx)
+// secureHTTPClient is an HTTP client with SSRF protection. Workers use it
+// when the operator has not allowed any private networks.
+var secureHTTPClient = ssrf.NewSecureClient()
 
-	contentType := ContentType(w.ContentType) //nolint:gosec
+// wake tells a worker running in this process that new work is queued, so
+// events raised by the server itself go out at once. The git hook runs in a
+// separate process, and the worker finds its deliveries by polling.
+var wake = make(chan struct{}, 1)
+
+func notify() {
+	select {
+	case wake <- struct{}{}:
+	default:
+	}
+}
+
+// render encodes a payload in the webhook's content type.
+func render(contentType ContentType, payload any) (string, error) {
 	switch contentType {
 	case ContentTypeJSON:
-		if err := json.NewEncoder(&buf).Encode(payload); err != nil {
-			return err
+		var b strings.Builder
+		if err := json.NewEncoder(&b).Encode(payload); err != nil {
+			return "", err //nolint:wrapcheck
 		}
+		return b.String(), nil
 	case ContentTypeForm:
 		v, err := query.Values(payload)
 		if err != nil {
-			return err
+			return "", err //nolint:wrapcheck
 		}
-		buf.WriteString(v.Encode()) //nolint: errcheck
+		return v.Encode(), nil
 	default:
-		return ErrInvalidContentType
+		return "", ErrInvalidContentType
 	}
-
-	headers := http.Header{}
-	headers.Add("Content-Type", contentType.String())
-	headers.Add("User-Agent", "Icy/"+version.Version)
-	headers.Add("X-Icy-Event", event.String())
-
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
-
-	headers.Add("X-Icy-Delivery", id.String())
-
-	reqBody := buf.String()
-	if w.Secret != "" {
-		sig := hmac.New(sha256.New, []byte(w.Secret))
-		sig.Write([]byte(reqBody)) //nolint: errcheck
-		headers.Add("X-Icy-Signature", "sha256="+hex.EncodeToString(sig.Sum(nil)))
-	}
-
-	res, reqErr := do(ctx, w.URL, http.MethodPost, headers, &buf)
-	var reqHeaders string
-	for k, v := range headers {
-		reqHeaders += k + ": " + v[0] + "\n"
-	}
-
-	resStatus := 0
-	resHeaders := ""
-	resBody := ""
-
-	if res != nil {
-		resStatus = res.StatusCode
-		for k, v := range res.Header {
-			resHeaders += k + ": " + v[0] + "\n"
-		}
-
-		if res.Body != nil {
-			defer res.Body.Close() //nolint: errcheck
-			b, err := io.ReadAll(res.Body)
-			if err != nil {
-				return err
-			}
-
-			resBody = string(b)
-		}
-	}
-
-	return db.WrapError(datastore.CreateWebhookDelivery(ctx, dbx, id, w.ID, int(event), w.URL, http.MethodPost, reqErr, reqHeaders, reqBody, resStatus, resHeaders, resBody))
 }
 
-// SendEvent sends a webhook event.
+// enqueue writes a delivery to the queue, due now.
+func enqueue(ctx context.Context, h db.Handler, datastore store.Store, webhookID int64, event Event, contentType ContentType, body string) (uuid.UUID, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return uuid.Nil, err //nolint:wrapcheck
+	}
+	if err := datastore.CreateWebhookQueueItem(ctx, h, id, webhookID, int(event), int(contentType), body, time.Now().Unix()); err != nil {
+		return uuid.Nil, db.WrapError(err)
+	}
+	return id, nil
+}
+
+// SendEvent queues an event for every active webhook of the repository that
+// subscribes to it. It renders the payload now and returns without waiting
+// for the network: the server's webhook worker sends it and retries it.
+//
+// One webhook failing to queue does not stop the others. The errors are
+// joined.
 func SendEvent(ctx context.Context, payload EventPayload) error {
 	dbx := db.FromContext(ctx)
 	datastore := store.FromContext(ctx)
@@ -137,12 +100,54 @@ func SendEvent(ctx context.Context, payload EventPayload) error {
 		return db.WrapError(err)
 	}
 
+	var errs []error
+	queued := false
 	for _, w := range webhooks {
-		if err := SendWebhook(ctx, w, payload.Event(), payload); err != nil {
-			return err
+		if !w.Active {
+			continue
+		}
+		contentType := ContentType(w.ContentType) //nolint:gosec
+		body, err := render(contentType, payload)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("webhook %d: %w", w.ID, err))
+			continue
+		}
+		if _, err := enqueue(ctx, dbx, datastore, w.ID, payload.Event(), contentType, body); err != nil {
+			errs = append(errs, fmt.Errorf("webhook %d: %w", w.ID, err))
+			continue
+		}
+		queued = true
+	}
+	if queued {
+		notify()
+	}
+
+	return errors.Join(errs...)
+}
+
+// Redeliver queues a new delivery of a recorded one. It gets a new delivery
+// ID and the request body is sent again unchanged.
+func Redeliver(ctx context.Context, w models.Webhook, d models.WebhookDelivery) error {
+	dbx := db.FromContext(ctx)
+	datastore := store.FromContext(ctx)
+
+	// The body was rendered in the content type of its day, so send it with
+	// that type even if the webhook has changed since.
+	contentType := ContentType(w.ContentType) //nolint:gosec
+	for _, line := range strings.Split(d.RequestHeaders, "\n") {
+		k, v, ok := strings.Cut(line, ":")
+		if ok && strings.EqualFold(strings.TrimSpace(k), "Content-Type") {
+			if ct, err := ParseContentType(strings.TrimSpace(v)); err == nil {
+				contentType = ct
+			}
+			break
 		}
 	}
 
+	if _, err := enqueue(ctx, dbx, datastore, w.ID, Event(d.Event), contentType, d.RequestBody); err != nil {
+		return err
+	}
+	notify()
 	return nil
 }
 
