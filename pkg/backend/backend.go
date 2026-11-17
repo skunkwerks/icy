@@ -26,6 +26,9 @@ type Backend struct {
 	// nothing has to happen in a particular order at startup for the gate
 	// to be in place.
 	importGate func() string
+
+	// webLogins holds pending web UI sign-in links.
+	webLogins webLogins
 }
 
 // New returns a new Icy backend.
