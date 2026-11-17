@@ -19,6 +19,7 @@ import (
 	"github.com/skunkwerks/icy/pkg/config"
 	"github.com/skunkwerks/icy/pkg/db"
 	"github.com/skunkwerks/icy/pkg/db/models"
+	"github.com/skunkwerks/icy/pkg/secrets"
 	"github.com/skunkwerks/icy/pkg/ssrf"
 	"github.com/skunkwerks/icy/pkg/store"
 	"github.com/skunkwerks/icy/pkg/version"
@@ -73,6 +74,10 @@ type Worker struct {
 	client *http.Client
 	logger *log.Logger
 	policy RetryPolicy
+	// keyPath is the secrets key file that opens bearer tokens. It is read
+	// on each attempt that needs it, so a restored or rotated key takes
+	// effect without a restart.
+	keyPath string
 
 	poll  time.Duration
 	lease time.Duration
@@ -89,7 +94,9 @@ func NewWorker(ctx context.Context) *Worker {
 	cfg := config.FromContext(ctx)
 	policy := RetryPolicy{MaxAttempts: 5, Backoff: 2 * time.Minute}
 	client := secureHTTPClient
+	keyPath := ""
 	if cfg != nil {
+		keyPath = secrets.KeyPath(cfg.DataPath)
 		if cfg.Webhook.MaxAttempts > 0 {
 			policy.MaxAttempts = cfg.Webhook.MaxAttempts
 		}
@@ -102,15 +109,16 @@ func NewWorker(ctx context.Context) *Worker {
 	}
 
 	return &Worker{
-		db:     db.FromContext(ctx),
-		store:  store.FromContext(ctx),
-		client: client,
-		logger: log.FromContext(ctx).WithPrefix("webhook"),
-		policy: policy,
-		poll:   defaultPollInterval,
-		lease:  defaultLease,
-		now:    time.Now,
-		sem:    make(chan struct{}, defaultConcurrency),
+		db:      db.FromContext(ctx),
+		store:   store.FromContext(ctx),
+		client:  client,
+		logger:  log.FromContext(ctx).WithPrefix("webhook"),
+		policy:  policy,
+		keyPath: keyPath,
+		poll:    defaultPollInterval,
+		lease:   defaultLease,
+		now:     time.Now,
+		sem:     make(chan struct{}, defaultConcurrency),
 	}
 }
 
@@ -236,6 +244,13 @@ func (w *Worker) process(ctx context.Context, item models.QueuedWebhookDelivery,
 		if err := w.store.DeleteWebhookQueueItem(bg, w.db, item.ID); err != nil {
 			logger.Error("removing delivered webhook from queue", "err", err)
 		}
+	case sendErr == nil && (rec.status == http.StatusUnauthorized || rec.status == http.StatusForbidden):
+		// The receiver refused the credentials. Sending the same ones
+		// again will not help, and could get the token locked out.
+		logger.Warn("webhook delivery refused, not retrying", "status", rec.status)
+		if err := w.store.DeleteWebhookQueueItem(bg, w.db, item.ID); err != nil {
+			logger.Error("removing refused webhook from queue", "err", err)
+		}
 	case attempt >= w.policy.MaxAttempts:
 		logger.Warn("webhook delivery failed, giving up", "status", rec.status, "err", sendErr)
 		if err := w.store.DeleteWebhookQueueItem(bg, w.db, item.ID); err != nil {
@@ -273,6 +288,17 @@ func (w *Worker) send(ctx context.Context, item models.QueuedWebhookDelivery) (r
 		headers.Add("X-Icy-Signature", "sha256="+hex.EncodeToString(sig.Sum(nil)))
 	}
 
+	if item.BearerToken != "" {
+		token, err := w.bearerToken(item.BearerToken)
+		if err != nil {
+			// Never send without the token. The detail goes to the
+			// server log only, since repo admins read the delivery log.
+			w.logger.Error("cannot open webhook bearer token", "webhook", item.WebhookID, "delivery", item.ID, "err", err)
+			return record{reqHeaders: formatHeaders(headers)}, errBearerUnavailable
+		}
+		headers.Add("Authorization", "Bearer "+token)
+	}
+
 	rec := record{reqHeaders: formatHeaders(headers)}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, item.URL, bytes.NewReader([]byte(item.RequestBody)))
@@ -307,7 +333,38 @@ func formatHeaders(h http.Header) string {
 
 	var b strings.Builder
 	for _, k := range keys {
-		b.WriteString(k + ": " + h.Get(k) + "\n")
+		v := h.Get(k)
+		if k == "Authorization" {
+			v = redact(v)
+		}
+		b.WriteString(k + ": " + v + "\n")
 	}
 	return b.String()
+}
+
+// redact hides the credentials of an Authorization header value and keeps
+// its scheme, such as Bearer.
+func redact(v string) string {
+	scheme, _, _ := strings.Cut(v, " ")
+	return scheme + " [REDACTED]"
+}
+
+// errBearerUnavailable is recorded when a webhook has a bearer token that
+// cannot be opened. Nothing is sent.
+var errBearerUnavailable = errors.New("bearer token cannot be decrypted, see the server log")
+
+// bearerToken opens a sealed bearer token with the secrets key.
+func (w *Worker) bearerToken(sealed string) (string, error) {
+	if w.keyPath == "" {
+		return "", secrets.ErrNoKey
+	}
+	key, err := secrets.LoadKey(w.keyPath)
+	if err != nil {
+		return "", err //nolint:wrapcheck
+	}
+	token, err := secrets.Decrypt(key, sealed)
+	if err != nil {
+		return "", err //nolint:wrapcheck
+	}
+	return string(token), nil
 }
