@@ -13,8 +13,8 @@ icy user create foo --key "$USER1_AUTHORIZED_KEY"
 # create a repo
 icy repo create repo1
 icy repo create repo1p -p
-usoft repo create repo2
-usoft repo create repo2p -p
+uicy repo create repo2
+uicy repo create repo2p -p
 
 # SSH Git commands as admin
 ! icy git-upload-pack
@@ -56,47 +56,47 @@ icy git-lfs-authenticate repo2p upload
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
 
 # SSH Git commands as user
-! usoft git-upload-pack
+! uicy git-upload-pack
 cmp stderr argserr1.txt
-! usoft git-upload-pack foobar
+! uicy git-upload-pack foobar
 cmp stderr invalidrepoerr.txt
-! usoft git-upload-archive
+! uicy git-upload-archive
 cmp stderr argserr1.txt
-! usoft git-upload-archive foobar
+! uicy git-upload-archive foobar
 cmp stderr invalidrepoerr.txt
-! usoft git-receive-pack
+! uicy git-receive-pack
 cmp stderr argserr1.txt
-! usoft git-receive-pack foobar
+! uicy git-receive-pack foobar
 stdout '.*0000 capabilities.*git.*' # git pack response
 stderr '.*something went wrong.*'
-! usoft git-lfs-authenticate
+! uicy git-lfs-authenticate
 cmp stderr argserr2.txt
-! usoft git-lfs-authenticate foobar download
+! uicy git-lfs-authenticate foobar download
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate foobar upload
+! uicy git-lfs-authenticate foobar upload
 cmp stderr invalidrepoerr.txt
-usoft git-lfs-authenticate repo1 download
+uicy git-lfs-authenticate repo1 download
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-! usoft git-lfs-authenticate repo1 upload
+! uicy git-lfs-authenticate repo1 upload
 cmp stderr notauthorizederr.txt
 # a private repo the user cannot read answers like a missing one
-! usoft git-lfs-authenticate repo1p download
+! uicy git-lfs-authenticate repo1p download
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate repo1p upload
+! uicy git-lfs-authenticate repo1p upload
 cmp stderr invalidrepoerr.txt
-! usoft git-upload-pack repo1p
+! uicy git-upload-pack repo1p
 cmp stderr invalidrepoerr.txt
-! usoft git-upload-archive repo1p
+! uicy git-upload-archive repo1p
 cmp stderr invalidrepoerr.txt
-! usoft git-receive-pack repo1p
+! uicy git-receive-pack repo1p
 cmp stderr invalidrepoerr.txt
-usoft git-lfs-authenticate repo2 download
+uicy git-lfs-authenticate repo2 download
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-usoft git-lfs-authenticate repo2 upload
+uicy git-lfs-authenticate repo2 upload
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-usoft git-lfs-authenticate repo2p download
+uicy git-lfs-authenticate repo2p download
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-usoft git-lfs-authenticate repo2p upload
+uicy git-lfs-authenticate repo2p upload
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
 
 # stop the server

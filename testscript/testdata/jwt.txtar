@@ -13,9 +13,9 @@ icy jwt
 stdout '.*\..*\..*'
 icy jwt repo
 stdout '.*\..*\..*'
-usoft jwt
+uicy jwt
 stdout '.*\..*\..*'
-usoft jwt repo
+uicy jwt repo
 stdout '.*\..*\..*'
 
 # a token for a private repo the user cannot read and one for a missing
@@ -23,10 +23,10 @@ stdout '.*\..*\..*'
 [windows] stopserver
 [windows] skip 'curl makes github actions hang'
 icy repo create secret -p
-usoft jwt secret
+uicy jwt secret
 cp stdout secretjwt
 envfile SECRETJWT=secretjwt
-usoft jwt ghost
+uicy jwt ghost
 cp stdout ghostjwt
 envfile GHOSTJWT=ghostjwt
 curl -H 'Authorization: Bearer '$SECRETJWT http://localhost:$HTTP_PORT/secret.git/info/refs?service=git-upload-pack

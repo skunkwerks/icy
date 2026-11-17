@@ -6,7 +6,7 @@ exec icy serve &
 ensureserverrunning SSH_PORT
 
 icy user create foo --key "$USER1_AUTHORIZED_KEY"
-usoft repo create foo-repo
+uicy repo create foo-repo
 
 # a user who owns repositories cannot be removed until they are gone
 ! icy user delete foo

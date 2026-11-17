@@ -101,22 +101,22 @@ stdout branch1
 icy user create bar --key "$USER1_AUTHORIZED_KEY"
 
 # user create a repo
-usoft repo create repo2 -d 'description' -H -p -n 'repo2'
+uicy repo create repo2 -d 'description' -H -p -n 'repo2'
 stderr 'Created repository repo2.*'
 stdout ssh://localhost:$SSH_PORT/repo2.git
-usoft repo hidden repo2
+uicy repo hidden repo2
 stdout true
-usoft repo private repo2
+uicy repo private repo2
 stdout true
 ! exists $DATA_PATH/repos/repo2.git/git-daemon-export-ok
-usoft repo description repo2
+uicy repo description repo2
 stdout 'description'
 readfile $DATA_PATH/repos/repo2.git/description 'description'
-usoft repo project-name repo2
+uicy repo project-name repo2
 stdout 'repo2'
 
 # user delete a repo
-usoft repo delete repo2
+uicy repo delete repo2
 ! exists $DATA_PATH/repos/repo2.git
 
 # stop the server

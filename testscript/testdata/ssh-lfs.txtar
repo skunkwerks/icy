@@ -15,8 +15,8 @@ icy user create foo --key "$USER1_AUTHORIZED_KEY"
 # create a repo
 icy repo create repo1
 icy repo create repo1p -p
-usoft repo create repo2
-usoft repo create repo2p -p
+uicy repo create repo2
+uicy repo create repo2p -p
 
 # SSH Git LFS Transfer command
 ! icy git-lfs-transfer
@@ -27,24 +27,24 @@ icy git-lfs-transfer repo1 download
 stdout '000eversion=1\n000clocking\n0000'
 icy git-lfs-transfer repo1 upload
 stdout '000eversion=1\n000clocking\n0000'
-usoft git-lfs-transfer repo1 download
+uicy git-lfs-transfer repo1 download
 stdout '000eversion=1\n000clocking\n0000'
-! usoft git-lfs-transfer repo1 upload
+! uicy git-lfs-transfer repo1 upload
 cmp stderr errauth.txt
 
 # Unauthorized user
-! usoft git-lfs-transfer
+! uicy git-lfs-transfer
 cmp stderr err1.txt
-! usoft git-lfs-transfer repo1p
+! uicy git-lfs-transfer repo1p
 cmp stderr err2.txt
 # a private repo the user cannot read answers like a missing one
-! usoft git-lfs-transfer repo1p download
+! uicy git-lfs-transfer repo1p download
 cmp stderr errrepo.txt
-! usoft git-lfs-transfer repo1p upload
+! uicy git-lfs-transfer repo1p upload
 cmp stderr errrepo.txt
-! usoft git-lfs-transfer foobar download
+! uicy git-lfs-transfer foobar download
 cmp stderr errrepo.txt
-! usoft git-lfs-transfer foobar upload
+! uicy git-lfs-transfer foobar upload
 cmp stderr errrepo.txt
 
 # push & create repo with some files, commits, tags...

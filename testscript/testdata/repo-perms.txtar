@@ -35,33 +35,33 @@ icy repo collab list repo1
 ! stdout .
 
 # regular user can't access it
-! usoft repo info repo1
+! uicy repo info repo1
 stderr 'repository not found'
-! usoft repo tree repo1
+! uicy repo tree repo1
 stderr 'repository not found'
-! usoft repo tag list repo1
+! uicy repo tag list repo1
 stderr 'repository not found'
-! usoft repo tag delete repo1 v1.0.0
+! uicy repo tag delete repo1 v1.0.0
 stderr 'repository not found'
-! usoft repo blob repo1 README.md
+! uicy repo blob repo1 README.md
 stderr 'repository not found'
-! usoft repo description repo1
+! uicy repo description repo1
 stderr 'repository not found'
-! usoft repo description repo1 'new desc'
+! uicy repo description repo1 'new desc'
 stderr 'repository not found'
-! usoft repo project-name repo1
+! uicy repo project-name repo1
 stderr 'repository not found'
-! usoft repo private repo1 true
+! uicy repo private repo1 true
 stderr 'repository not found'
-! usoft repo private repo1
+! uicy repo private repo1
 stderr 'repository not found'
-! usoft repo rename repo1 repo11
+! uicy repo rename repo1 repo11
 stderr 'repository not found'
-! usoft repo branch default repo1
+! uicy repo branch default repo1
 stderr 'repository not found'
-! usoft repo branch default repo1 main
+! uicy repo branch default repo1 main
 stderr 'repository not found'
-! usoft repo delete repo1
+! uicy repo delete repo1
 stderr 'repository not found'
 
 # add user1 as collab
@@ -70,16 +70,16 @@ stderr 'invalid access level'
 icy repo collab add repo1 user1 read-write
 icy repo collab list repo1
 stdout user1
-usoft repo collab list repo1
+uicy repo collab list repo1
 stdout user1
 
 # verify user1 has access now
-usoft repo info repo1
+uicy repo info repo1
 cmp stdout info.txt
 
 # delete
-usoft repo delete repo1
-usoft repo list
+uicy repo delete repo1
+uicy repo list
 ! stdout .
 
 # stop the server

@@ -18,12 +18,12 @@ icy user create user1 --key "$USER1_AUTHORIZED_KEY"
 
 # an allowed host passes policy for a non-admin and fails only at the clone,
 # since nothing listens on loopback port 1
-! usoft repo import allowed1 ssh://git@127.0.0.1:1/x.git
+! uicy repo import allowed1 ssh://git@127.0.0.1:1/x.git
 stderr 'import failed'
 ! stderr 'unauthorized'
 
 # the same host on a port the entry does not name is refused
-! usoft repo import denied1 ssh://git@127.0.0.1:2/x.git
+! uicy repo import denied1 ssh://git@127.0.0.1:2/x.git
 stderr 'remote must be a network URL'
 stderr 'remote host is not allowed'
 
@@ -32,9 +32,9 @@ stderr 'remote host is not allowed'
 stderr 'remote host is not allowed'
 
 # scp-style syntax goes through the same policy
-! usoft repo import denied3 git@127.0.0.1:x.git
+! uicy repo import denied3 git@127.0.0.1:x.git
 stderr 'remote host is not allowed'
-! usoft repo import allowed2 '[git@127.0.0.1:1]:x.git'
+! uicy repo import allowed2 '[git@127.0.0.1:1]:x.git'
 stderr 'import failed'
 
 icy repo list

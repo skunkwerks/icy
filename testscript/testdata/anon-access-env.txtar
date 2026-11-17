@@ -19,11 +19,11 @@ ensureserverrunning SSH_PORT
 ensureserverrunning HTTP_PORT
 
 # --- SSH, with zero credentials: no key offered at all ---
-# ksoft authenticates via keyboard-interactive with no public key at all --
+# kicy authenticates via keyboard-interactive with no public key at all --
 # the exact "no key at all" path that allow-keyless gates. This is distinct
 # from offering an unregistered key, which anon-access alone already
 # governs regardless of allow-keyless -- see anon-access.txtar.
-ksoft repo create keyless-repo
+kicy repo create keyless-repo
 stderr 'Created repository keyless-repo'
 
 # --- HTTP, with zero credentials: no Authorization header at all ---
@@ -40,7 +40,7 @@ cmp httprepo_clone/README.md httprepo/README.md
 
 # both repos -- the one created via keyless SSH and the one auto-created by
 # a keyless HTTP push -- are visible with zero credentials.
-ksoft repo list
+kicy repo list
 stdout 'keyless-repo'
 stdout 'httprepo'
 

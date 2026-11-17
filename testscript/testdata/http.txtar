@@ -23,7 +23,7 @@ icy token create --expires-in '1ns' 'repo2'
 stdout 'ss_*'
 cp stdout etokenfile
 envfile ETOKEN=etokenfile
-usoft token create 'repo2'
+uicy token create 'repo2'
 stdout 'ss_*'
 cp stdout utokenfile
 envfile UTOKEN=utokenfile

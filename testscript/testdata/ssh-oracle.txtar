@@ -18,26 +18,26 @@ git -C secret add -A
 git -C secret commit -m 'first'
 git -C secret push origin HEAD
 
-# anonymous key: user1 is not registered yet, so usoft/ugit are anonymous
-! usoft git-upload-pack secret
+# anonymous key: user1 is not registered yet, so uicy/ugit are anonymous
+! uicy git-upload-pack secret
 cmp stderr notauthorizederr.txt
-! usoft git-upload-pack ghost
+! uicy git-upload-pack ghost
 cmp stderr notauthorizederr.txt
-! usoft git-upload-archive secret
+! uicy git-upload-archive secret
 cmp stderr notauthorizederr.txt
-! usoft git-upload-archive ghost
+! uicy git-upload-archive ghost
 cmp stderr notauthorizederr.txt
-! usoft git-receive-pack secret
+! uicy git-receive-pack secret
 cmp stderr notauthorizederr.txt
-! usoft git-receive-pack ghost
+! uicy git-receive-pack ghost
 cmp stderr notauthorizederr.txt
-! usoft git-lfs-authenticate secret download
+! uicy git-lfs-authenticate secret download
 cmp stderr notauthorizederr.txt
-! usoft git-lfs-authenticate ghost download
+! uicy git-lfs-authenticate ghost download
 cmp stderr notauthorizederr.txt
-! usoft git-lfs-authenticate secret upload
+! uicy git-lfs-authenticate secret upload
 cmp stderr notauthorizederr.txt
-! usoft git-lfs-authenticate ghost upload
+! uicy git-lfs-authenticate ghost upload
 cmp stderr notauthorizederr.txt
 ! ugit clone ssh://localhost:$SSH_PORT/secret secret_anon
 stderr 'you are not authorized to do this'
@@ -58,53 +58,53 @@ grep 'Repositories' tui-ghost.txt
 
 # registered user without access
 icy user create user1 --key "$USER1_AUTHORIZED_KEY"
-! usoft git-upload-pack secret
+! uicy git-upload-pack secret
 cmp stderr invalidrepoerr.txt
-! usoft git-upload-pack ghost
+! uicy git-upload-pack ghost
 cmp stderr invalidrepoerr.txt
-! usoft git-upload-archive secret
+! uicy git-upload-archive secret
 cmp stderr invalidrepoerr.txt
-! usoft git-upload-archive ghost
+! uicy git-upload-archive ghost
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate secret download
+! uicy git-lfs-authenticate secret download
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate ghost download
+! uicy git-lfs-authenticate ghost download
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate secret upload
+! uicy git-lfs-authenticate secret upload
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate ghost upload
+! uicy git-lfs-authenticate ghost upload
 cmp stderr invalidrepoerr.txt
 ! ugit clone ssh://localhost:$SSH_PORT/secret secret_user
 stderr 'invalid repo'
 
 # a push to a private repo the user cannot read is refused the same way,
 # while a push to a new name still creates it
-! usoft git-receive-pack secret
+! uicy git-receive-pack secret
 cmp stderr invalidrepoerr.txt
 ugit -C secret push ssh://localhost:$SSH_PORT/newname HEAD
-usoft repo list
+uicy repo list
 stdout 'newname'
 ! stdout 'ghost'
 
 # a collaborator explicitly granted no access is treated like a stranger
 icy repo collab add secret user1 no-access
-! usoft git-upload-pack secret
+! uicy git-upload-pack secret
 cmp stderr invalidrepoerr.txt
-! usoft git-upload-pack ghost
+! uicy git-upload-pack ghost
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate secret download
+! uicy git-lfs-authenticate secret download
 cmp stderr invalidrepoerr.txt
-! usoft git-receive-pack secret
+! uicy git-receive-pack secret
 cmp stderr invalidrepoerr.txt
 icy repo collab remove secret user1
 
 # a directory with no database row answers like any unreadable repository
 mkdir $DATA_PATH/repos/orphan.git
-! usoft git-upload-pack orphan
+! uicy git-upload-pack orphan
 cmp stderr invalidrepoerr.txt
-! usoft git-receive-pack orphan
+! uicy git-receive-pack orphan
 cmp stderr invalidrepoerr.txt
-! usoft git-lfs-authenticate orphan download
+! uicy git-lfs-authenticate orphan download
 cmp stderr invalidrepoerr.txt
 icy repo list
 ! stdout 'orphan'
@@ -121,11 +121,11 @@ grep 'Repositories' tui-ghost2.txt
 
 # a reader is still told when they cannot write
 icy repo collab add secret user1 read-only
-usoft git-lfs-authenticate secret download
+uicy git-lfs-authenticate secret download
 stdout '.*Bearer.*'
-! usoft git-lfs-authenticate secret upload
+! uicy git-lfs-authenticate secret upload
 cmp stderr notauthorizederr.txt
-! usoft git-receive-pack secret
+! uicy git-receive-pack secret
 cmp stderr notauthorizederr.txt
 
 # stop the server; the last command must succeed so stderr is clean

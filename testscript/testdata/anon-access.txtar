@@ -22,11 +22,11 @@ git -C repo1 push origin HEAD
 stderr 'Error: you are not authorized to do this'
 
 # list repo as anon
-usoft repo list
+uicy repo list
 stdout ''
 
 # create repo as anon
-! usoft repo create urepo2
+! uicy repo create urepo2
 stderr 'Error: unauthorized'
 
 # stop the server

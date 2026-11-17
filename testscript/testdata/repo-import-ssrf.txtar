@@ -60,10 +60,10 @@ stderr 'remote must be a network URL'
 # admin's attempt passes policy and then fails at the clone (nothing listens
 # on loopback port 1); the clone's own error must not come back to the user.
 icy user create user1 --key "$USER1_AUTHORIZED_KEY"
-! usoft repo import bad12 ssh://git@127.0.0.1:1/x.git
+! uicy repo import bad12 ssh://git@127.0.0.1:1/x.git
 stderr 'unauthorized'
 ! stderr 'remote must be a network URL'
-! usoft repo import bad13 git@127.0.0.1:x.git
+! uicy repo import bad13 git@127.0.0.1:x.git
 stderr 'unauthorized'
 ! icy repo import bad14 ssh://git@127.0.0.1:1/x.git
 stderr 'import failed'

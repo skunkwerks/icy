@@ -92,10 +92,10 @@ func TestScript(t *testing.T) {
 		UpdateScripts:       *update,
 		RequireExplicitExec: true,
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
-			"icy":                    cmdSoft("admin", admin1.Signer()),
-			"usoft":                  cmdSoft("user1", user1.Signer()),
-			"attacksoft":             cmdSoft("attacker", attackerSigner, attacker.Signer()),
-			"ksoft":                  cmdKeylessSoft,
+			"icy":                    cmdIcy("admin", admin1.Signer()),
+			"uicy":                   cmdIcy("user1", user1.Signer()),
+			"attackicy":              cmdIcy("attacker", attackerSigner, attacker.Signer()),
+			"kicy":                   cmdKeylessIcy,
 			"git":                    cmdGit(admin1Key),
 			"ugit":                   cmdGit(user1Key),
 			"agit":                   cmdGit(attackerKey),
@@ -197,7 +197,7 @@ func TestScript(t *testing.T) {
 	})
 }
 
-func cmdSoft(user string, keys ...ssh.Signer) func(ts *testscript.TestScript, neg bool, args []string) {
+func cmdIcy(user string, keys ...ssh.Signer) func(ts *testscript.TestScript, neg bool, args []string) {
 	return func(ts *testscript.TestScript, neg bool, args []string) {
 		cli, err := ssh.Dial(
 			"tcp",
@@ -222,9 +222,9 @@ func cmdSoft(user string, keys ...ssh.Signer) func(ts *testscript.TestScript, ne
 	}
 }
 
-// cmdKeylessSoft is like cmdSoft, but authenticates with zero public keys,
+// cmdKeylessIcy is like cmdIcy, but authenticates with zero public keys,
 // forcing keyboard-interactive auth -- the actual "no key offered at all"
-// path that allow-keyless gates. This is distinct from cmdSoft/cmdUsoft
+// path that allow-keyless gates. This is distinct from cmdIcy/cmdUicy
 // style helpers, which always offer a real key (registered or not) and so
 // only ever exercise the anon-access path, not allow-keyless.
 //
@@ -233,7 +233,7 @@ func cmdSoft(user string, keys ...ssh.Signer) func(ts *testscript.TestScript, ne
 // request at all when stdin isn't a tty ("we did not send a packet, disable
 // method"), regardless of BatchMode. golang.org/x/crypto/ssh has no such
 // restriction, so it's used directly here instead of shelling out.
-func cmdKeylessSoft(ts *testscript.TestScript, neg bool, args []string) {
+func cmdKeylessIcy(ts *testscript.TestScript, neg bool, args []string) {
 	cli, err := ssh.Dial(
 		"tcp",
 		net.JoinHostPort("localhost", ts.Getenv("SSH_PORT")),

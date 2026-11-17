@@ -19,15 +19,15 @@ git -C secret commit -m 'first'
 git -C secret push origin HEAD
 
 # user1 cannot read the private repo directly
-! usoft repo info secret
+! uicy repo info secret
 stderr 'repository not found'
 
 # user1 also must not be able to import the server-local repo path
-! usoft repo import stolen "$DATA_PATH/repos/secret.git" --lfs-endpoint http://example.com
+! uicy repo import stolen "$DATA_PATH/repos/secret.git" --lfs-endpoint http://example.com
 stderr 'remote must be a network URL'
 
 # the failed import must not create a readable repo
-! usoft repo info stolen
+! uicy repo info stolen
 stderr 'repository not found'
 
 [windows] stopserver

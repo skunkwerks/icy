@@ -37,14 +37,14 @@ icy help
 
 # a no-access collaborator cannot read a private repo (GHSA-pmgj-8mr6-9rff)
 icy repo create secret -p
-! usoft repo description secret
+! uicy repo description secret
 stderr '.*repository not found.*'
 icy repo collab add secret foo no-access
-! usoft repo description secret
+! uicy repo description secret
 stderr '.*repository not found.*'
 icy repo collab remove secret foo
 icy repo collab add secret foo read-only
-usoft repo description secret
+uicy repo description secret
 
 # stop the server
 [windows] stopserver

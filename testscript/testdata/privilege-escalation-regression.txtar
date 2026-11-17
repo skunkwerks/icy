@@ -41,27 +41,27 @@ stdout 'Admin: false'
 
 # The attacker creates repositories named after the arguments they intend to
 # pass to the global commands. They own these, so they are repo-admin of them.
-usoft repo create user1
-usoft repo create victim
-usoft repo create true
-usoft repo create admin-access
-usoft repo create admin
+uicy repo create user1
+uicy repo create victim
+uicy repo create true
+uicy repo create admin-access
+uicy repo create admin
 
 # Repo-admin access must not authorize global user commands.
-! usoft user set-admin user1 true
-! usoft user set-admin victim true
-! usoft user create victim
-! usoft user delete admin
-! usoft user list
-! usoft user info admin
-! usoft user set-username admin victim
-! usoft user add-pubkey admin "$ADMIN2_AUTHORIZED_KEY"
-! usoft user remove-pubkey admin "$ADMIN1_AUTHORIZED_KEY"
+! uicy user set-admin user1 true
+! uicy user set-admin victim true
+! uicy user create victim
+! uicy user delete admin
+! uicy user list
+! uicy user info admin
+! uicy user set-username admin victim
+! uicy user add-pubkey admin "$ADMIN2_AUTHORIZED_KEY"
+! uicy user remove-pubkey admin "$ADMIN1_AUTHORIZED_KEY"
 
 # Repo-admin access must not authorize global settings commands.
-! usoft settings anon-access admin-access
-! usoft settings anon-access read-write
-! usoft settings allow-keyless true
+! uicy settings anon-access admin-access
+! uicy settings anon-access read-write
+! uicy settings allow-keyless true
 
 # a placeholder to reset stderr
 icy help
@@ -78,11 +78,11 @@ icy repo collab add shared user1 read-write
 icy repo collab add shared boss admin-access
 
 # user1 is read-write on "shared" and must not be able to grant admin-access.
-! usoft repo collab add shared user1 admin-access
+! uicy repo collab add shared user1 admin-access
 # ...nor remove a collaborator ranked above them.
-! usoft repo collab remove shared boss
+! uicy repo collab remove shared boss
 # ...nor demote one by overwriting the grant.
-! usoft repo collab add shared boss read-only
+! uicy repo collab add shared boss read-only
 
 # a placeholder to reset stderr
 icy help
@@ -93,7 +93,7 @@ stdout 'boss'
 
 # Granting at or below the caller's own level still works.
 icy user create peer
-usoft repo collab add shared peer read-only
+uicy repo collab add shared peer read-only
 icy repo collab list shared
 stdout 'peer'
 
@@ -104,8 +104,8 @@ new-webhook WH_SHARED
 icy repo webhook create shared $WH_SHARED -e push
 icy repo webhook list shared
 stdout '1.*'
-! usoft repo webhook deliveries list user1 1
-! usoft repo webhook deliveries get user1 1 00000000-0000-0000-0000-000000000000
+! uicy repo webhook deliveries list user1 1
+! uicy repo webhook deliveries get user1 1 00000000-0000-0000-0000-000000000000
 
 # a placeholder to reset stderr
 icy help

@@ -17,322 +17,322 @@ git -C secret commit -m 'first'
 git -C secret tag v1
 git -C secret push origin HEAD --tags
 
-# anonymous key: user1 is not registered yet, so usoft is anonymous
-! usoft repo info secret
+# anonymous key: user1 is not registered yet, so uicy is anonymous
+! uicy repo info secret
 stderr 'unauthorized'
 ! stdout .
 cp stderr want.txt
-! usoft repo info ghost
+! uicy repo info ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo tree secret
+! uicy repo tree secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo tree ghost
+! uicy repo tree ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo blob secret README.md
+! uicy repo blob secret README.md
 cmp stderr want.txt
 ! stdout .
-! usoft repo blob ghost README.md
+! uicy repo blob ghost README.md
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch list secret
+! uicy repo branch list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch list ghost
+! uicy repo branch list ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default secret
+! uicy repo branch default secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default ghost
+! uicy repo branch default ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default secret master
+! uicy repo branch default secret master
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default ghost master
+! uicy repo branch default ghost master
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch delete secret master
+! uicy repo branch delete secret master
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch delete ghost master
+! uicy repo branch delete ghost master
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag list secret
+! uicy repo tag list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag list ghost
+! uicy repo tag list ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag delete secret v1
+! uicy repo tag delete secret v1
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag delete ghost v1
+! uicy repo tag delete ghost v1
 cmp stderr want.txt
 ! stdout .
-! usoft repo delete secret
+! uicy repo delete secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo delete ghost
+! uicy repo delete ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo rename secret other
+! uicy repo rename secret other
 cmp stderr want.txt
 ! stdout .
-! usoft repo rename ghost other
+! uicy repo rename ghost other
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab list secret
+! uicy repo collab list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab list ghost
+! uicy repo collab list ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add secret admin
+! uicy repo collab add secret admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add ghost admin
+! uicy repo collab add ghost admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add secret admin admin-access
+! uicy repo collab add secret admin admin-access
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add ghost admin admin-access
+! uicy repo collab add ghost admin admin-access
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab remove secret admin
+! uicy repo collab remove secret admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab remove ghost admin
+! uicy repo collab remove ghost admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo description secret
+! uicy repo description secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo description ghost
+! uicy repo description ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo description secret new
+! uicy repo description secret new
 cmp stderr want.txt
 ! stdout .
-! usoft repo description ghost new
+! uicy repo description ghost new
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name secret
+! uicy repo project-name secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name ghost
+! uicy repo project-name ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name secret new
+! uicy repo project-name secret new
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name ghost new
+! uicy repo project-name ghost new
 cmp stderr want.txt
 ! stdout .
-! usoft repo private secret
+! uicy repo private secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo private ghost
+! uicy repo private ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo private secret true
+! uicy repo private secret true
 cmp stderr want.txt
 ! stdout .
-! usoft repo private ghost true
+! uicy repo private ghost true
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden secret
+! uicy repo hidden secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden ghost
+! uicy repo hidden ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden secret true
+! uicy repo hidden secret true
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden ghost true
+! uicy repo hidden ghost true
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror secret
+! uicy repo mirror secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror ghost
+! uicy repo mirror ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror secret true
+! uicy repo mirror secret true
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror ghost true
+! uicy repo mirror ghost true
 cmp stderr want.txt
 ! stdout .
-! usoft repo webhook list secret
+! uicy repo webhook list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo webhook list ghost
+! uicy repo webhook list ghost
 cmp stderr want.txt
 ! stdout .
 
 # registered user without access
 icy user create user1 --key "$USER1_AUTHORIZED_KEY"
-! usoft repo info secret
+! uicy repo info secret
 stderr 'repository not found'
 ! stdout .
 cp stderr want.txt
-! usoft repo info ghost
+! uicy repo info ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo tree secret
+! uicy repo tree secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo tree ghost
+! uicy repo tree ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo blob secret README.md
+! uicy repo blob secret README.md
 cmp stderr want.txt
 ! stdout .
-! usoft repo blob ghost README.md
+! uicy repo blob ghost README.md
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch list secret
+! uicy repo branch list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch list ghost
+! uicy repo branch list ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default secret
+! uicy repo branch default secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default ghost
+! uicy repo branch default ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default secret master
+! uicy repo branch default secret master
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch default ghost master
+! uicy repo branch default ghost master
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch delete secret master
+! uicy repo branch delete secret master
 cmp stderr want.txt
 ! stdout .
-! usoft repo branch delete ghost master
+! uicy repo branch delete ghost master
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag list secret
+! uicy repo tag list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag list ghost
+! uicy repo tag list ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag delete secret v1
+! uicy repo tag delete secret v1
 cmp stderr want.txt
 ! stdout .
-! usoft repo tag delete ghost v1
+! uicy repo tag delete ghost v1
 cmp stderr want.txt
 ! stdout .
-! usoft repo delete secret
+! uicy repo delete secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo delete ghost
+! uicy repo delete ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo rename secret other
+! uicy repo rename secret other
 cmp stderr want.txt
 ! stdout .
-! usoft repo rename ghost other
+! uicy repo rename ghost other
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab list secret
+! uicy repo collab list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab list ghost
+! uicy repo collab list ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add secret admin
+! uicy repo collab add secret admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add ghost admin
+! uicy repo collab add ghost admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add secret admin admin-access
+! uicy repo collab add secret admin admin-access
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab add ghost admin admin-access
+! uicy repo collab add ghost admin admin-access
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab remove secret admin
+! uicy repo collab remove secret admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo collab remove ghost admin
+! uicy repo collab remove ghost admin
 cmp stderr want.txt
 ! stdout .
-! usoft repo description secret
+! uicy repo description secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo description ghost
+! uicy repo description ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo description secret new
+! uicy repo description secret new
 cmp stderr want.txt
 ! stdout .
-! usoft repo description ghost new
+! uicy repo description ghost new
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name secret
+! uicy repo project-name secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name ghost
+! uicy repo project-name ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name secret new
+! uicy repo project-name secret new
 cmp stderr want.txt
 ! stdout .
-! usoft repo project-name ghost new
+! uicy repo project-name ghost new
 cmp stderr want.txt
 ! stdout .
-! usoft repo private secret
+! uicy repo private secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo private ghost
+! uicy repo private ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo private secret true
+! uicy repo private secret true
 cmp stderr want.txt
 ! stdout .
-! usoft repo private ghost true
+! uicy repo private ghost true
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden secret
+! uicy repo hidden secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden ghost
+! uicy repo hidden ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden secret true
+! uicy repo hidden secret true
 cmp stderr want.txt
 ! stdout .
-! usoft repo hidden ghost true
+! uicy repo hidden ghost true
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror secret
+! uicy repo mirror secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror ghost
+! uicy repo mirror ghost
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror secret true
+! uicy repo mirror secret true
 cmp stderr want.txt
 ! stdout .
-! usoft repo mirror ghost true
+! uicy repo mirror ghost true
 cmp stderr want.txt
 ! stdout .
-! usoft repo webhook list secret
+! uicy repo webhook list secret
 cmp stderr want.txt
 ! stdout .
-! usoft repo webhook list ghost
+! uicy repo webhook list ghost
 cmp stderr want.txt
 ! stdout .
 
@@ -350,10 +350,10 @@ stdout 'secret'
 
 # a directory with no database row answers like any unreadable repository
 mkdir $DATA_PATH/repos/orphan.git
-! usoft repo info orphan
+! uicy repo info orphan
 cmp stderr want.txt
 ! stdout .
-! usoft repo delete orphan
+! uicy repo delete orphan
 cmp stderr want.txt
 ! stdout .
 
@@ -370,12 +370,12 @@ stderr 'repository not found'
 
 # a reader who cannot write is still told so, since existence is no secret
 icy repo collab add secret user1 read-only
-usoft repo description secret
-! usoft repo delete secret
+uicy repo description secret
+! uicy repo delete secret
 stderr 'unauthorized'
-! usoft repo description secret new
+! uicy repo description secret new
 stderr 'unauthorized'
-! usoft repo collab list secret
+! uicy repo collab list secret
 stderr 'unauthorized'
 
 # stop the server; the last command must succeed so stderr is clean
