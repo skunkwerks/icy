@@ -74,21 +74,44 @@ func render(contentType ContentType, payload any) (string, error) {
 	}
 }
 
-// enqueue writes a delivery to the queue, due now.
-func enqueue(ctx context.Context, h db.Handler, datastore store.Store, webhookID int64, event Event, contentType ContentType, body string) (uuid.UUID, error) {
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return uuid.Nil, err //nolint:wrapcheck
-	}
+// enqueue writes a delivery to the queue under the delivery ID id, due now.
+func enqueue(ctx context.Context, h db.Handler, datastore store.Store, id uuid.UUID, webhookID int64, event Event, contentType ContentType, body string) error {
 	if err := datastore.CreateWebhookQueueItem(ctx, h, id, webhookID, int(event), int(contentType), body, time.Now().Unix()); err != nil {
-		return uuid.Nil, db.WrapError(err)
+		return db.WrapError(err)
 	}
-	return id, nil
+	return nil
+}
+
+// renderFor renders the body of one delivery for a webhook. It reports
+// false when the webhook's format has nothing to send for this event, such
+// as a tag push to a buildkite webhook.
+func renderFor(w models.Webhook, id uuid.UUID, payload EventPayload) (string, ContentType, bool, error) {
+	contentType := ContentType(w.ContentType) //nolint:gosec
+	switch FormatOf(w.Format) {
+	case FormatIcy:
+		body, err := render(contentType, payload)
+		return body, contentType, err == nil, err
+	case FormatBuildkite:
+		var push PushEvent
+		switch p := payload.(type) {
+		case PushEvent:
+			push = p
+		case *PushEvent:
+			push = *p
+		default:
+			return "", 0, false, ErrFormatEvents
+		}
+		body, ok, err := buildkiteBody(push, id)
+		return body, ContentTypeJSON, ok && err == nil, err
+	default:
+		return "", 0, false, ErrInvalidFormat
+	}
 }
 
 // SendEvent queues an event for every active webhook of the repository that
-// subscribes to it. It renders the payload now and returns without waiting
-// for the network: the server's webhook worker sends it and retries it.
+// subscribes to it. It renders the payload now, in each webhook's format,
+// and returns without waiting for the network: the server's webhook worker
+// sends it and retries it.
 //
 // One webhook failing to queue does not stop the others. The errors are
 // joined.
@@ -106,13 +129,20 @@ func SendEvent(ctx context.Context, payload EventPayload) error {
 		if !w.Active {
 			continue
 		}
-		contentType := ContentType(w.ContentType) //nolint:gosec
-		body, err := render(contentType, payload)
+		id, err := uuid.NewRandom()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("webhook %d: %w", w.ID, err))
 			continue
 		}
-		if _, err := enqueue(ctx, dbx, datastore, w.ID, payload.Event(), contentType, body); err != nil {
+		body, contentType, send, err := renderFor(w, id, payload)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("webhook %d: %w", w.ID, err))
+			continue
+		}
+		if !send {
+			continue
+		}
+		if err := enqueue(ctx, dbx, datastore, id, w.ID, payload.Event(), contentType, body); err != nil {
 			errs = append(errs, fmt.Errorf("webhook %d: %w", w.ID, err))
 			continue
 		}
@@ -144,7 +174,11 @@ func Redeliver(ctx context.Context, w models.Webhook, d models.WebhookDelivery) 
 		}
 	}
 
-	if _, err := enqueue(ctx, dbx, datastore, w.ID, Event(d.Event), contentType, d.RequestBody); err != nil {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err //nolint:wrapcheck
+	}
+	if err := enqueue(ctx, dbx, datastore, id, w.ID, Event(d.Event), contentType, d.RequestBody); err != nil {
 		return err
 	}
 	notify()
