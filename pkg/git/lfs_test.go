@@ -17,7 +17,7 @@ func TestLFSTransferRejectsMalformedOid(t *testing.T) {
 	oids := []string{
 		"../../../../../../../../etc/passwd",
 		"../../ssh/icy_host_ed25519",
-		"objects/../../../soft-serve.db",
+		"objects/../../../icy.db",
 		"/etc/passwd",
 		"",
 		"abc",

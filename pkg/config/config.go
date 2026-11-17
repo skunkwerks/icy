@@ -457,7 +457,7 @@ func DefaultConfig() *Config {
 		},
 		DB: DBConfig{
 			Driver: "sqlite",
-			DataSource: "soft-serve.db" +
+			DataSource: "icy.db" +
 				"?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)",
 		},
 		LFS: LFSConfig{
