@@ -2,10 +2,10 @@ Set Width 1600
 Set Height 900
 Set FontSize 22
 
-Output soft-serve-browse.gif
-Output soft-serve-frames/
+Output icy-browse.gif
+Output icy-frames/
 
-Type@300ms "soft"
+Type@300ms "icy"
 Enter
 Sleep 2s
 Type@1s "ddd"

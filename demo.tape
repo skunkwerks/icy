@@ -2,8 +2,8 @@ Set Width 1600
 Set Height 900
 Set FontSize 22
 
-Output soft-serve.gif
-Output soft-serve-frames/
+Output icy.gif
+Output icy-frames/
 
 Type "ssh git.charm.sh"
 Sleep 1s
