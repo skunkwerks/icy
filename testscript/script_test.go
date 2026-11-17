@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"os/exec"
@@ -18,6 +19,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -482,10 +484,26 @@ func newWebhookSiteToken(site string) (string, error) {
 	return token.UUID, nil
 }
 
+// curlJars holds the named cookie jars of curl --jar, per test script.
+var curlJars sync.Map
+
+// curlJar returns the cookie jar called name for ts, creating it on first
+// use.
+func curlJar(ts *testscript.TestScript, name string) http.CookieJar {
+	type key struct {
+		ts   *testscript.TestScript
+		name string
+	}
+	jar, _ := cookiejar.New(nil)
+	j, _ := curlJars.LoadOrStore(key{ts, name}, jar)
+	return j.(http.CookieJar)
+}
+
 func cmdCurl(ts *testscript.TestScript, neg bool, args []string) {
 	var verbose bool
 	var headers []string
 	var data string
+	var jarName string
 	method := http.MethodGet
 
 	cmd := &cobra.Command{
@@ -531,7 +549,12 @@ func cmdCurl(ts *testscript.TestScript, neg bool, args []string) {
 				}
 			}
 
-			resp, err := http.DefaultClient.Do(req)
+			client := http.DefaultClient
+			if jarName != "" {
+				client = &http.Client{Jar: curlJar(ts, jarName)}
+			}
+
+			resp, err := client.Do(req)
 			if err != nil {
 				return err
 			}
@@ -565,6 +588,7 @@ func cmdCurl(ts *testscript.TestScript, neg bool, args []string) {
 	cmd.Flags().StringArrayVarP(&headers, "header", "H", nil, "HTTP header")
 	cmd.Flags().StringVarP(&method, "request", "X", method, "HTTP method")
 	cmd.Flags().StringVarP(&data, "data", "d", data, "HTTP data")
+	cmd.Flags().StringVar(&jarName, "jar", "", "keep cookies in the named jar across curl calls")
 
 	check(ts, cmd.Execute(), neg)
 }

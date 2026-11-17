@@ -1,0 +1,126 @@
+# vi: set ft=conf
+
+[windows] skip 'curl makes github actions hang'
+
+# start icy serve
+exec icy serve &
+# wait for the SSH and HTTP servers to start
+ensureserverrunning SSH_PORT
+ensureserverrunning HTTP_PORT
+
+# one repository of each visibility
+icy repo create pub -d public-one
+icy repo create hid --visibility unlisted
+icy repo create secret --visibility private
+icy repo visibility pub
+stdout 'public'
+icy repo visibility hid
+stdout 'unlisted'
+icy repo hidden hid
+stdout 'true'
+icy repo visibility secret
+stdout 'private'
+icy repo private secret
+stdout 'true'
+! icy repo visibility pub hush
+stderr 'invalid visibility'
+
+# give each a README
+git clone ssh://localhost:$SSH_PORT/pub pub
+mkfile ./pub/README.md '# Pub readme'
+git -C pub add -A
+git -C pub commit -m 'first'
+git -C pub push origin HEAD
+git clone ssh://localhost:$SSH_PORT/hid hid
+mkfile ./hid/README.md '# Hid readme'
+git -C hid add -A
+git -C hid commit -m 'first'
+git -C hid push origin HEAD
+git clone ssh://localhost:$SSH_PORT/secret secret
+mkfile ./secret/README.md '# Secret readme'
+git -C secret add -A
+git -C secret commit -m 'first'
+git -C secret push origin HEAD
+
+# the front page lists only the public repository
+curl http://localhost:$HTTP_PORT/
+stdout 'Test Icy'
+stdout 'href="/pub"'
+stdout 'public-one'
+! stdout 'hid'
+! stdout 'secret'
+
+# repository pages
+curl http://localhost:$HTTP_PORT/pub
+stdout '<h1>Pub readme</h1>'
+stdout 'git clone http://localhost:[0-9]+/pub.git'
+stdout 'git clone ssh://localhost:[0-9]+/pub.git'
+curl http://localhost:$HTTP_PORT/pub/~/tree
+stdout 'README.md'
+curl http://localhost:$HTTP_PORT/pub/~/raw/README.md
+cmp stdout pub/README.md
+curl http://localhost:$HTTP_PORT/pub/~/log
+stdout 'first'
+
+# the unlisted repository is not listed, but works by URL, including an
+# anonymous clone over http
+curl http://localhost:$HTTP_PORT/hid
+stdout '<h1>Hid readme</h1>'
+git clone http://localhost:$HTTP_PORT/hid hid_clone
+exists hid_clone/README.md
+
+# the private repository answers exactly like one that does not exist
+curl http://localhost:$HTTP_PORT/secret
+stdout '404 Not Found'
+! stdout 'Secret'
+cp stdout missing.txt
+curl http://localhost:$HTTP_PORT/ghost
+cmp stdout missing.txt
+curl http://localhost:$HTTP_PORT/secret/~/raw/README.md
+cmp stdout missing.txt
+curl http://localhost:$HTTP_PORT/ghost/~/raw/README.md
+cmp stdout missing.txt
+curl http://localhost:$HTTP_PORT/secret/~/log
+cmp stdout missing.txt
+curl http://localhost:$HTTP_PORT/ghost/~/log
+cmp stdout missing.txt
+
+# an unregistered key cannot get a sign-in link
+! uicy web login
+! stdout .
+
+# sign in with a link minted over ssh; it lands on the repository
+icy web login secret
+stdout '^http://localhost:[0-9]+/~/login\?token=icy_login_'
+stderr 'expires in 5 minutes'
+cp stdout login.txt
+envfile LOGIN=login.txt
+curl --jar admin $LOGIN
+stdout '<h1>Secret readme</h1>'
+curl --jar admin http://localhost:$HTTP_PORT/
+stdout 'href="/secret"'
+stdout 'Sign out'
+
+# the link works once
+curl --jar other $LOGIN
+stdout '400 Bad Request'
+curl --jar other http://localhost:$HTTP_PORT/secret
+cmp stdout missing.txt
+
+# signing out ends the session
+curl --jar admin -X POST http://localhost:$HTTP_PORT/~/logout
+! stdout 'Sign out'
+curl --jar admin http://localhost:$HTTP_PORT/secret
+! stdout 'Secret readme'
+
+# changing visibility shows up straight away
+icy repo visibility secret public
+curl http://localhost:$HTTP_PORT/
+stdout 'href="/secret"'
+icy repo visibility secret private
+curl http://localhost:$HTTP_PORT/
+! stdout 'secret'
+
+# go-get still works next to the web UI
+curl http://localhost:$HTTP_PORT/pub?go-get=1
+stdout 'go-import'
