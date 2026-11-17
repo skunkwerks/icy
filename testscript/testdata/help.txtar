@@ -29,6 +29,7 @@ Available Commands:
   settings             Manage server settings
   token                Manage access tokens
   user                 Manage users
+  web                  Sign in to the web UI
 
 Flags:
   -h, --help   help for this command

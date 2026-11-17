@@ -133,6 +133,10 @@ func CommandMiddleware(sh ssh.Handler) ssh.Handler {
 			cmd.TokenCommand(),
 		)
 
+		if cfg.Web.Enabled && cfg.HTTP.Enabled {
+			rootCmd.AddCommand(cmd.WebCommand())
+		}
+
 		if cfg.LFS.Enabled {
 			rootCmd.AddCommand(
 				cmd.GitLFSAuthenticateCommand(),
