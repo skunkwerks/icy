@@ -20,27 +20,6 @@ A tasty, self-hostable Git server for the command line. 🍦
   - Repos can be public or private
   - User access tokens
 
-## Where can I see it?
-
-Just run `ssh git.charm.sh` for an example. You can also try some of the following commands:
-
-```bash
-# Jump directly to a repo in the TUI
-ssh git.charm.sh -t icy
-
-# Print out a directory tree for a repo
-ssh git.charm.sh repo tree icy
-
-# Print a specific file
-ssh git.charm.sh repo blob icy cmd/icy/main.go
-
-# Print a file with syntax highlighting and line numbers
-ssh git.charm.sh repo blob icy cmd/icy/main.go -c -l
-```
-
-Or you can use Icy to browse local repositories using `icy browse
-[directory]` or running `icy` within a Git repository.
-
 ## Installation
 
 Icy is a single binary called `icy`. You can get it from a package
