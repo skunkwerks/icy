@@ -1,0 +1,111 @@
+# vi: set ft=conf
+
+# Who sees which repository in each listing: the web front page, repo list
+# over ssh and the TUI all follow proto.Visibility.Listed.
+#
+#   public    listed for anyone who can read it
+#   unlisted  listed only for signed in users, reachable by name for all
+#   private   listed only for those who can read it, even when hidden
+#
+# icy is the admin, uicy is user1 (a member with no grants) and kicy is an
+# anonymous, keyless caller. aui runs the TUI with a key no user owns.
+
+# start icy serve
+exec icy serve &
+# wait for SSH server to start
+ensureserverrunning SSH_PORT
+
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy repo create pub
+icy repo create unl --visibility unlisted
+icy repo create priv -p
+icy repo create privhid -p
+icy repo hidden privhid true
+
+# give each repository a commit so it can be cloned
+git clone ssh://localhost:$SSH_PORT/pub pub
+mkfile ./pub/README.md '# pub'
+git -C pub add -A
+git -C pub commit -m 'first'
+git -C pub push origin HEAD
+git clone ssh://localhost:$SSH_PORT/unl unl
+mkfile ./unl/README.md '# unl'
+git -C unl add -A
+git -C unl commit -m 'first'
+git -C unl push origin HEAD
+
+# repo list: the admin sees everything
+icy repo list
+stdout '^pub$'
+stdout '^unl$'
+stdout '^priv$'
+stdout '^privhid$'
+
+# repo list: a member sees public and unlisted, never private
+uicy repo list
+stdout '^pub$'
+stdout '^unl$'
+! stdout 'priv'
+
+# repo list: an anonymous caller sees public only
+kicy repo list
+stdout '^pub$'
+! stdout 'unl'
+! stdout 'priv'
+
+# --all no longer shows unlisted repositories to anonymous callers
+kicy repo list --all
+stdout '^pub$'
+! stdout 'unl'
+stderr 'deprecated'
+
+# a collaborator sees the private repository they were granted
+icy repo collab add priv user1 read-only
+uicy repo list
+stdout '^priv$'
+! stdout 'privhid'
+
+# TUI: the admin sees everything
+ui '"    q"'
+stdout 'pub'
+stdout 'unl'
+stdout 'privhid'
+
+# TUI: a member sees public, unlisted and the private repo they can read
+uui '"    q"'
+stdout 'pub'
+stdout 'unl'
+stdout 'priv'
+! stdout 'privhid'
+
+# TUI: a key no user owns is anonymous and sees public only
+aui '"    q"'
+stdout 'pub'
+! stdout 'unl'
+! stdout 'priv'
+
+# web: anonymous visitors see public only, by name they reach unlisted too
+curl http://localhost:$HTTP_PORT/
+stdout 'href="/pub"'
+! stdout 'href="/unl"'
+! stdout 'priv'
+curl http://localhost:$HTTP_PORT/unl
+stdout 'unl'
+
+# https clone: anonymous callers can clone public and unlisted, not private
+git clone http://localhost:$HTTP_PORT/pub anon-pub
+exists anon-pub/README.md
+git clone http://localhost:$HTTP_PORT/unl anon-unl
+exists anon-unl/README.md
+! git clone http://localhost:$HTTP_PORT/priv anon-priv
+
+# with allow-keyless off, anonymous callers get nothing at all
+icy settings allow-keyless false
+curl http://localhost:$HTTP_PORT/
+! stdout 'href="/pub"'
+! git clone http://localhost:$HTTP_PORT/pub anon-pub2
+! git clone http://localhost:$HTTP_PORT/unl anon-unl2
+
+# stop the server
+[windows] stopserver
+[windows] ! stderr .
