@@ -110,6 +110,7 @@ func TestScript(t *testing.T) {
 			"mkfile":                 cmdMkfile,
 			"envfile":                cmdEnvfile,
 			"envsubst":               cmdEnvsubst,
+			"envmatch":               cmdEnvmatch,
 			"readfile":               cmdReadfile,
 			"dos2unix":               cmdDos2Unix,
 			"new-webhook":            cmdNewWebhook,
@@ -229,6 +230,12 @@ func cmdIcy(user string, keys ...ssh.Signer) func(ts *testscript.TestScript, neg
 
 		sess.Stdout = ts.Stdout()
 		sess.Stderr = ts.Stderr()
+
+		// "-stdin FILE" first sends the file as the command's stdin.
+		if len(args) >= 2 && args[0] == "-stdin" {
+			sess.Stdin = strings.NewReader(ts.ReadFile(args[1]))
+			args = args[2:]
+		}
 
 		check(ts, sess.Run(strings.Join(args, " ")), neg)
 	}
@@ -434,6 +441,21 @@ func cmdEnvfile(ts *testscript.TestScript, neg bool, args []string) {
 	}
 }
 
+// cmdEnvmatch sets key to the first group of the first match of a regular
+// expression in a file.
+func cmdEnvmatch(ts *testscript.TestScript, neg bool, args []string) {
+	if neg || len(args) != 3 {
+		ts.Fatalf("usage: envmatch key file regexp")
+	}
+	re, err := regexp.Compile(args[2])
+	ts.Check(err)
+	m := re.FindStringSubmatch(ts.ReadFile(args[1]))
+	if len(m) < 2 {
+		ts.Fatalf("envmatch: no match for %q in %s", args[2], args[1])
+	}
+	ts.Setenv(args[0], m[1])
+}
+
 // cmdEnvsubst copies src to dst, replacing $VAR and ${VAR} with the
 // script's environment.
 func cmdEnvsubst(ts *testscript.TestScript, neg bool, args []string) {
@@ -475,7 +497,8 @@ func cmdNewWebhook(ts *testscript.TestScript, neg bool, args []string) {
 // cmdNewLocalWebhook starts a webhook receiver on 127.0.0.1 for the length
 // of the script and sets the named variable to its URL. It answers 200 and
 // appends each request's X-Icy-Event and X-Icy-Delivery headers to the log
-// file named by the second argument.
+// file named by the second argument, and its Authorization header as
+// auth=VALUE when there is one.
 //
 // The server refuses loopback unless webhook.allowed_networks lists it, so
 // scripts using this set ICY_WEBHOOK_ALLOWED_NETWORKS before starting it.
@@ -488,7 +511,11 @@ func cmdNewLocalWebhook(ts *testscript.TestScript, neg bool, args []string) {
 		io.Copy(io.Discard, r.Body) //nolint:errcheck
 		f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 		if err == nil {
-			fmt.Fprintf(f, "%s %s\n", r.Header.Get("X-Icy-Event"), r.Header.Get("X-Icy-Delivery"))
+			auth := ""
+			if v := r.Header.Get("Authorization"); v != "" {
+				auth = " auth=" + v
+			}
+			fmt.Fprintf(f, "%s %s%s\n", r.Header.Get("X-Icy-Event"), r.Header.Get("X-Icy-Delivery"), auth)
 			f.Close() //nolint:errcheck
 		}
 		w.WriteHeader(http.StatusOK)

@@ -1,0 +1,106 @@
+# vi: set ft=conf
+
+# A webhook can carry a bearer token, set by a server admin over ssh stdin.
+# The receiver gets it in the Authorization header, and the delivery log
+# shows it redacted. The receiver runs on loopback in the test process, so
+# no internet is needed.
+
+# allow loopback only, then start icy serve
+env ICY_WEBHOOK_ALLOWED_NETWORKS=127.0.0.1
+exec icy serve &
+ensureserverrunning SSH_PORT
+
+# the secrets key is made on first start
+exists $DATA_PATH/secrets.key
+
+icy repo create repo-bk
+stderr 'Created repository repo-bk.*'
+
+# a repo admin who is not a server admin cannot set a token
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
+uicy repo create repo-user1
+new-local-webhook WH_USER user1.log
+! uicy -stdin token.txt repo webhook create repo-user1 $WH_USER -e push --bearer-stdin
+stderr 'unauthorized'
+uicy repo webhook create repo-user1 $WH_USER -e push
+! uicy -stdin token.txt repo webhook update repo-user1 1 --bearer-stdin
+stderr 'unauthorized'
+
+# a server admin can, on an icy webhook and on a buildkite one. Webhook
+# IDs are server wide, so these are 2 and 3.
+new-local-webhook WH_LOCAL hooks.log
+new-local-webhook WH_BK buildkite.log
+icy -stdin token.txt repo webhook create repo-bk $WH_LOCAL -e push --bearer-stdin
+icy -stdin token.txt repo webhook create repo-bk $WH_BK -e push --format buildkite --bearer-stdin
+
+# buildkite takes the push event only
+! icy repo webhook create repo-bk $WH_BK/other -e push -e collaborator --format buildkite
+stderr 'buildkite format works only with the push event'
+
+# list and info say a token is set, and never show it
+icy repo webhook list repo-bk
+stdout 'bearer \(set\)'
+! stdout 'bk-test-token'
+icy repo webhook info repo-bk 3
+stdout 'Format: buildkite'
+stdout 'Auth: bearer \(set\)'
+! stdout 'bk-test-token'
+
+# push, then wait for the server to send the queued deliveries
+git clone ssh://localhost:$SSH_PORT/repo-bk repo-bk
+mkfile ./repo-bk/README.md 'foobar'
+git -C repo-bk add -A
+git -C repo-bk commit -m 'first "quoted" commit'
+git -C repo-bk push origin HEAD
+waitdelivery repo-bk 2 '✅.*push.*'
+waitdelivery repo-bk 3 '✅.*push.*'
+
+# the receivers got the token
+readfile hooks.log
+stdout '^push [0-9a-f-]{36} auth=Bearer bk-test-token$'
+readfile buildkite.log
+stdout '^push [0-9a-f-]{36} auth=Bearer bk-test-token$'
+
+# the delivery log shows it redacted
+envmatch DELIVERY hooks.log '^push ([0-9a-f-]{36})'
+icy repo webhook deliveries get repo-bk 2 $DELIVERY
+stdout 'Authorization: Bearer \[REDACTED\]'
+! stdout 'bk-test-token'
+
+# the buildkite body names the commit, branch and message
+envmatch BKDELIVERY buildkite.log '^push ([0-9a-f-]{36})'
+icy repo webhook deliveries get repo-bk 3 $BKDELIVERY
+stdout '"commit":"[0-9a-f]{40}","branch":"(main|master)","message":"first \\"quoted\\" commit"'
+stdout '"icy_delivery":"'$BKDELIVERY'","icy_repo":"repo-bk"'
+stdout 'Authorization: Bearer \[REDACTED\]'
+! stdout 'bk-test-token'
+
+# an annotated tag push builds the tag, at the commit the tag points to
+git -C repo-bk tag -a v1.0.0 -m 'release 1.0'
+git -C repo-bk push origin v1.0.0
+waitdelivery repo-bk 3 '(?s)✅.*push.*✅.*push'
+envmatch BKTAG buildkite.log '(?m)^push [^\n]*\npush ([0-9a-f-]{36})'
+icy repo webhook deliveries get repo-bk 3 $BKTAG
+stdout '"branch":"v1.0.0"'
+stdout '"icy_tag":"v1.0.0"'
+cp stdout tagdelivery.txt
+git -C repo-bk rev-parse 'v1.0.0^{commit}'
+cp stdout tagcommit.txt
+envmatch TAGCOMMIT tagcommit.txt '([0-9a-f]{40})'
+git -C repo-bk rev-parse v1.0.0
+cp stdout tagobject.txt
+envmatch TAGOBJECT tagobject.txt '([0-9a-f]{40})'
+grep '"commit":"'$TAGCOMMIT'"' tagdelivery.txt
+! grep $TAGOBJECT tagdelivery.txt
+
+# --no-bearer clears the token
+icy repo webhook update repo-bk 2 --no-bearer
+icy repo webhook info repo-bk 2
+! stdout 'bearer'
+
+# stop the server
+[windows] stopserver
+[windows] ! stderr .
+
+-- token.txt --
+bk-test-token
