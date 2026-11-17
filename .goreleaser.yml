@@ -11,6 +11,6 @@ variables:
   binary_name: icy
   description: "A tasty, self-hostable Git server for the command line🍦"
   github_url: "https://github.com/skunkwerks/icy"
-  maintainer: "Ayman Bagabas <ayman@charm.sh>"
-  brew_commit_author_name: "Ayman Bagabas"
-  brew_commit_author_email: "ayman@charm.sh"
+  maintainer: "Dave Cottlehuber <dch@skunkwerks.at>"
+  brew_commit_author_name: "Dave Cottlehuber"
+  brew_commit_author_email: "dch@skunkwerks.at"
