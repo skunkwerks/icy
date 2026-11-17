@@ -238,6 +238,16 @@ web:
 jobs:
   mirror_pull: "@every 10m"
 
+# Repository webhook configuration.
+webhook:
+  # Private or internal networks that webhooks may reach, such as a CI
+  # server on the LAN. Entries are CIDR prefixes or single IP addresses.
+  allowed_networks: []
+  # How many times a delivery is tried before it is given up.
+  max_attempts: 5
+  # The wait after the first failed attempt. It doubles after each failure.
+  retry_backoff: "2m0s"
+
 # The stats server configuration.
 stats:
   # The address on which the stats server will listen.
@@ -733,29 +743,315 @@ Use `--raw` to print raw file contents. This is useful for dumping binary data.
 
 ### Repository webhooks
 
-Icy supports repository webhooks using the `repo webhook` command. You
-can create and manage webhooks for different repository events such as _push_,
-_collaborators_, and _branch_tag_create_ events.
+A webhook sends an HTTP `POST` to a URL when something happens in a
+repository. Repo admins manage them with the `repo webhook` command. Use
+`ssh -p 23231 localhost repo webhook help` for the full list of flags.
 
+```sh
+# Send push events to a CI server, signed with a secret
+ssh -p 23231 localhost repo webhook create icy https://ci.example.com/hook \
+  -e push -e branch_tag_create --secret 's3cret'
+
+# List webhooks and their IDs
+ssh -p 23231 localhost repo webhook list icy
+
+# Change the URL or events of webhook 1, or switch it off
+ssh -p 23231 localhost repo webhook update icy 1 --url https://ci2.example.com/hook
+ssh -p 23231 localhost repo webhook update icy 1 --active=false
 ```
-Manage repository webhooks
 
-Usage:
-  ssh -p 23231 localhost repo webhook [command]
+#### Events
 
-Aliases:
-  webhook, webhooks
+Pass one or more of these to `-e`:
 
-Available Commands:
-  create      Create a repository webhook
-  delete      Delete a repository webhook
-  deliveries  Manage webhook deliveries
-  list        List repository webhooks
-  update      Update a repository webhook
+| Event                          | Sent when                                       |
+| ------------------------------ | ----------------------------------------------- |
+| `push`                         | commits are pushed to a branch or tag           |
+| `branch_tag_create`            | a branch or tag is created                      |
+| `branch_tag_delete`            | a branch or tag is deleted                      |
+| `collaborator`                 | a collaborator is added or removed              |
+| `repository`                   | the repository is created, deleted, or renamed  |
+| `repository_visibility_change` | the repository is made private or public        |
 
-Flags:
-  -h, --help   help for webhook
+A push that creates a branch sends both `branch_tag_create` and `push`.
+
+#### Payload
+
+The body is JSON by default. Use `--content-type form` to get it as
+`application/x-www-form-urlencoded` instead. Every event has `event`,
+`repository`, and `sender`. A push event adds these fields:
+
+- `ref` is the full name of the ref that moved, such as `refs/heads/main`.
+- `before` is the commit the ref pointed at before the push. It is all
+  zeros when the push created the ref.
+- `after` is the commit the ref points at now. Build this one.
+- `commits` lists up to 20 of the pushed commits, newest first.
+
+A trimmed push payload looks like this:
+
+```json
+{
+  "event": "push",
+  "ref": "refs/heads/main",
+  "before": "0f3c1b5a…",
+  "after": "9a8e47d2…",
+  "repository": {
+    "id": 3,
+    "name": "icy",
+    "private": true,
+    "default_branch": "main",
+    "owner": { "id": 1, "username": "admin" },
+    "http_url": "https://git.example.com/icy.git",
+    "ssh_url": "ssh://git.example.com:23231/icy.git",
+    "git_url": "git://git.example.com/icy.git"
+  },
+  "sender": { "id": 2, "username": "frankie" },
+  "commits": [
+    {
+      "id": "9a8e47d2…",
+      "title": "Fix the build",
+      "message": "Fix the build\n",
+      "author": { "name": "Frankie", "email": "frankie@example.com", "date": "2026-11-17T10:04:27Z" },
+      "committer": { "name": "Frankie", "email": "frankie@example.com", "date": "2026-11-17T10:04:27Z" },
+      "timestamp": "2026-11-17T10:04:27Z"
+    }
+  ]
+}
 ```
+
+#### Headers
+
+| Header            | Value                                                       |
+| ----------------- | ----------------------------------------------------------- |
+| `Content-Type`    | `application/json` or `application/x-www-form-urlencoded`   |
+| `User-Agent`      | `Icy/<version>`                                             |
+| `X-Icy-Event`     | the event name, such as `push`                              |
+| `X-Icy-Delivery`  | a UUID for this delivery. Retries send the same UUID.       |
+| `X-Icy-Signature` | `sha256=` and the hex HMAC of the body. Sent only with a secret. |
+
+A receiver can drop a delivery whose `X-Icy-Delivery` it has seen before.
+This stops a retry from starting a second build.
+
+#### Checking the signature
+
+When the webhook has a secret, Icy signs the raw request body with
+HMAC-SHA256 and that secret. Compute the same HMAC over the bytes you
+received, before any JSON parsing, and compare it with the header. Reject
+the request if they differ.
+
+In shell, with the body saved to `body.json` and the header value in
+`HTTP_X_ICY_SIGNATURE`, as a CGI script gets it:
+
+```sh
+want="sha256=$(openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -r body.json | cut -d' ' -f1)"
+[ "$want" = "$HTTP_X_ICY_SIGNATURE" ] || { echo "bad signature" >&2; exit 1; }
+```
+
+In Go:
+
+```go
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+)
+
+// validSignature reports whether header is the X-Icy-Signature of body.
+func validSignature(body []byte, header, secret string) bool {
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write(body)
+	want := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+	return hmac.Equal([]byte(header), []byte(want))
+}
+```
+
+`hmac.Equal` takes the same time for every input, so it does not leak how
+much of the signature matched.
+
+#### Delivery, retries, and the delivery log
+
+Icy does not send webhooks during the push. The git hook writes each
+delivery to a queue in the database and returns at once. The `icy serve`
+process sends queued deliveries within a second or so. A slow or broken
+receiver never holds up a push.
+
+A delivery succeeds when the receiver answers with a `2xx` status. Any
+other status, a timeout, or a connection error counts as a failure. Each
+attempt times out after 30 seconds. After a failure Icy waits and tries
+again, and the wait doubles each time. With the defaults it tries five
+times, waiting 2, 4, 8, and 16 minutes, so it gives up about 30 minutes
+after the push. One failing webhook does not delay the others.
+
+The queue lives in the database, so deliveries survive a restart of the
+server. A delivery that was in flight when the server stopped is sent again
+when it starts.
+
+Change the retry policy in `config.yaml`, or with `ICY_WEBHOOK_MAX_ATTEMPTS`
+and `ICY_WEBHOOK_RETRY_BACKOFF`:
+
+```yaml
+webhook:
+  max_attempts: 5
+  retry_backoff: "2m"
+```
+
+Every attempt is kept in the delivery log. Only repo admins can read it,
+because it has the full request and response.
+
+```sh
+# List deliveries of webhook 1. ✅ is a 2xx answer, ❌ is a failure,
+# and ⏳ is still queued or waiting to retry.
+ssh -p 23231 localhost repo webhook deliveries list icy 1
+
+# Show the request and response of one attempt
+ssh -p 23231 localhost repo webhook deliveries get icy 1 <delivery-id>
+
+# Queue a recorded delivery to be sent again, with a new delivery ID
+ssh -p 23231 localhost repo webhook deliveries redeliver icy 1 <delivery-id>
+```
+
+The first attempt is logged under its `X-Icy-Delivery` UUID. Each retry
+gets its own log entry, and its request headers show the shared
+`X-Icy-Delivery`.
+
+#### Webhooks to a private network
+
+Icy refuses webhook URLs that point at private, loopback, link-local,
+CGNAT, or other internal addresses. This stops a repo admin from using a
+webhook to reach hosts inside your network. It checks the URL when the
+webhook is created or updated, and again for the address that it connects
+to on each attempt.
+
+If your CI server is on the LAN or in a jail, list its address in
+`webhook.allowed_networks`. Entries are CIDR prefixes or single IP
+addresses:
+
+```yaml
+webhook:
+  allowed_networks:
+    - "10.0.10.0/24"
+    - "192.168.1.20"
+```
+
+Or use `ICY_WEBHOOK_ALLOWED_NETWORKS="10.0.10.0/24,192.168.1.20"`.
+
+Hostnames are not accepted in the list. A webhook URL may still use a
+hostname, but only if every address it resolves to is public or in the
+list. Icy connects to the address that it checked, so a DNS change after
+the check cannot send the request somewhere else. Names such as
+`localhost` are always refused, so write `http://127.0.0.1:8080/` if the
+receiver is on the same host. Keep the list as small as you can. Every
+repo admin can send requests to anything in it.
+
+#### Example: build on push
+
+This example runs a CI build on every push to `main` of a private repo
+called `app`. The CI server is at `10.0.10.5` on the LAN.
+
+Allow the CI server and restart Icy:
+
+```yaml
+webhook:
+  allowed_networks:
+    - "10.0.10.5"
+```
+
+Create a user for CI and give it read-only access to the repo. It can then
+clone `app` but not push to it.
+
+```sh
+ssh -p 23231 localhost user create ci '-k "ssh-ed25519 AAAA... ci@ci"'
+ssh -p 23231 localhost repo collab add app ci read-only
+```
+
+As the `ci` user, create an access token for cloning over HTTP:
+
+```sh
+ssh -i ~/.ssh/ci_ed25519 -p 23231 git.example.com token create 'ci clone'
+```
+
+Store the token and a webhook secret on the CI server. Then add the
+webhook:
+
+```sh
+ssh -p 23231 localhost repo webhook create app http://10.0.10.5:8080/hook \
+  -e push --secret "$WEBHOOK_SECRET"
+```
+
+On the CI server, a small receiver checks the signature, answers at once,
+and starts the build in the background. It answers before the build ends
+so that the attempt does not time out.
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+)
+
+func main() {
+	secret := os.Getenv("WEBHOOK_SECRET")
+	http.HandleFunc("/hook", func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+		if err != nil || !validSignature(body, r.Header.Get("X-Icy-Signature"), secret) {
+			http.Error(w, "bad signature", http.StatusUnauthorized)
+			return
+		}
+		if r.Header.Get("X-Icy-Event") != "push" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		var p struct {
+			Ref        string `json:"ref"`
+			After      string `json:"after"`
+			Repository struct {
+				Name string `json:"name"`
+			} `json:"repository"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			http.Error(w, "bad payload", http.StatusBadRequest)
+			return
+		}
+		if p.Ref == "refs/heads/main" {
+			cmd := exec.Command("./build.sh", p.Repository.Name, p.After, r.Header.Get("X-Icy-Delivery"))
+			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+			if err := cmd.Start(); err == nil {
+				go cmd.Wait()
+			}
+		}
+		w.WriteHeader(http.StatusAccepted)
+	})
+	http.ListenAndServe(":8080", nil)
+}
+```
+
+`validSignature` is the function from the section above. `build.sh` clones
+the exact commit that was pushed, using the token:
+
+```sh
+#!/bin/sh
+set -eu
+repo="$1" commit="$2" delivery="$3"
+dir="/var/ci/$delivery"
+
+# Skip a delivery that we have already built
+[ -d "$dir" ] && exit 0
+
+git clone "https://$ICY_CI_TOKEN@git.example.com/$repo.git" "$dir"
+cd "$dir"
+git checkout --detach "$commit"
+make test
+```
+
+The token is in the clone URL, so do not print it in build logs. If the
+build fails to start, check `repo webhook deliveries list app 1` on Icy. It
+shows whether the hook reached the CI server and what the CI server
+answered.
 
 ## The Icy TUI
 
