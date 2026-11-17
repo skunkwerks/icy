@@ -262,12 +262,17 @@ stats:
 # as long as they remain set -- not just on first run. This is intended for
 # scripted, non-production bootstrapping (e.g. spinning up a throwaway
 # server for local dev tooling), not for production use.
+# With state_source "config" they are written to the database instead.
 #anon_access: "admin-access"
 #allow_keyless: true
 
 # Repository name to create on boot if it does not already exist.
 # Leave empty to disable.
 #default_repo: ""
+
+# Where users, repositories and access settings come from: "db" or
+# "config". See "Users and Repositories in config.yaml" below.
+#state_source: "db"
 ```
 
 You can also use environment variables, to override these settings. All server
@@ -283,6 +288,7 @@ name all in uppercase. Here are some examples:
 - `ICY_ANON_ACCESS`: Overrides the `anon-access` setting (see [Authentication](#authentication))
 - `ICY_ALLOW_KEYLESS`: Overrides the `allow-keyless` setting (see [Authentication](#authentication))
 - `ICY_DEFAULT_REPO`: Repository name to create on boot if missing
+- `ICY_STATE_SOURCE`: Where users, repositories and access come from, `db` or `config` (see [Users and Repositories in config.yaml](#users-and-repositories-in-configyaml))
 
 #### Database Configuration
 
@@ -319,6 +325,80 @@ Icy supports both Git LFS [HTTP](https://github.com/git-lfs/git-lfs/blob/main/do
 Use the `lfs` config section to customize your Git LFS server.
 
 > **Note**: The pure-SSH transfer is disabled by default.
+
+#### Users and Repositories in config.yaml
+
+By default Icy keeps users, repositories and access settings in its database,
+and you change them with ssh commands. You can instead list them in
+`config.yaml`. This suits tools such as Ansible, which can template the file
+and reload the server.
+
+Turn it on with `state_source: config` in `config.yaml`, the
+`ICY_STATE_SOURCE=config` environment variable, or
+`icy serve --state-source config`. The flag beats the environment variable,
+which beats the file. Then add these top-level keys:
+
+```yaml
+state_source: config
+anon_access: read-only   # no-access, read-only, read-write or admin-access
+allow_keyless: true
+users:
+  - name: alice
+    admin: true
+    public_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... alice@laptop"
+  - name: bob
+    public_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... bob@desk"
+repos:
+  - name: icy
+    project_name: Icy
+    description: A Git server
+    private: true
+    hidden: false
+    owner: alice          # defaults to the first admin in users
+    collaborators:
+      bob: read-write
+```
+
+At startup, and each time the server gets `SIGHUP`, Icy reads these keys and
+makes the database match them. It adds what is new, updates what has changed
+and removes what the file no longer lists. A removed repository is moved to
+`repos-removed` in the data directory, not deleted. A reload applies only these
+keys. Other settings, such as listen addresses, still need a restart, and the
+log says so if they have changed.
+
+Icy checks all of these keys before it changes anything, and applies them in
+one database transaction. An unknown key inside `users` or `repos` is an error,
+so a typo cannot drop a setting. A file with errors stops the server from
+starting. On `SIGHUP`, a file with errors is logged and the server keeps its
+current state. Two more checks guard against mistakes:
+
+- The file must list at least one admin with a public key, unless
+  `initial_admin_keys` is set, so that you cannot lock yourself out.
+- The file must have a `users` or a `repos` key. A `config.yaml` with neither
+  would remove every user and repository. Write `users: []` and `repos: []`
+  if that is what you want.
+
+`anon_access` and `allow_keyless` follow one rule in both modes. The
+environment variable (`ICY_ANON_ACCESS`, `ICY_ALLOW_KEYLESS`) beats
+`config.yaml`, which beats the database. With `state_source: db`, a value from
+either overrides the database while it is set, and the `settings` command
+changes the database underneath. With `state_source: config`, Icy writes the
+winning value into the database at startup and on reload. A key left out of
+the file means the default: `read-only` and `true`.
+
+While `state_source` is `config`, ssh commands that would change users,
+repositories, collaborators or settings are refused. Pushes to repositories in
+the file still work. A push to a repository that is not in the file does not
+create it. With `state_source: db`, any `users` or `repos` keys in
+`config.yaml` are ignored, and the log warns about them.
+
+To check a file before you install it, for example as an Ansible `validate`
+step, run `icy admin check-state FILE`. With no `FILE` it checks the server's
+own `config.yaml`. To move an existing server over, run
+`icy admin export-state`. It prints the current users, repositories and
+settings as keys to paste into `config.yaml`.
 
 ## Server Access
 
