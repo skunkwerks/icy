@@ -1,9 +1,9 @@
 # Running Icy with Docker
 
-The official Icy Docker images are available at [charmcli/icy][docker]. Development and nightly builds are available at [ghcr.io/skunkwerks/icy][ghcr]
+Icy Docker images are available at [ghcr.io/skunkwerks/icy][ghcr].
 
 ```sh
-docker pull charmcli/icy:latest
+docker pull ghcr.io/skunkwerks/icy:latest
 ```
 
 Here’s how you might run `icy` as a container.  Keep in mind that
@@ -20,7 +20,7 @@ docker run \
   --publish 9418:9418 \
   -e ICY_INITIAL_ADMIN_KEYS="YOUR_ADMIN_KEY_HERE" \
   --restart unless-stopped \
-  charmcli/icy:latest
+  ghcr.io/skunkwerks/icy:latest
 ```
 
 Or by using docker-compose:
@@ -30,7 +30,7 @@ Or by using docker-compose:
 version: "3.1"
 services:
   icy:
-    image: charmcli/icy:latest
+    image: ghcr.io/skunkwerks/icy:latest
     container_name: icy
     volumes:
       - /path/to/data:/icy
@@ -44,7 +44,6 @@ services:
     restart: unless-stopped
 ```
 
-[docker]: https://hub.docker.com/r/charmcli/icy
 [ghcr]: https://github.com/skunkwerks/icy/pkgs/container/icy
 
 
