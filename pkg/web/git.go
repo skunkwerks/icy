@@ -391,6 +391,15 @@ func withAccess(next http.Handler) http.HandlerFunc {
 		ctx = access.WithContext(ctx, accessLevel)
 		r = r.WithContext(ctx)
 
+		// A push may not create a name with a reserved segment. This is
+		// decided from the name alone, before the access level, which
+		// differs between a missing name and an existing private one.
+		if repo == nil && service == git.ReceivePackService && isPushEndpoint(file) &&
+			!badCredentials(err) && utils.HasReservedSegment(repoName) {
+			renderReservedName(w, repoName)
+			return
+		}
+
 		switch authorize(service, file, r.Method, repo != nil, accessLevel, user == nil, badCredentials(err)) {
 		case createThenServe:
 			var cerr error
@@ -646,6 +655,14 @@ func renderMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 
 func renderNotFound(w http.ResponseWriter, r *http.Request) {
 	renderStatus(http.StatusNotFound)(w, r)
+}
+
+// renderReservedName refuses to create a repository whose name has a
+// reserved segment.
+func renderReservedName(w http.ResponseWriter, name string) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusBadRequest)
+	fmt.Fprintf(w, "%d %s: %v\n", http.StatusBadRequest, http.StatusText(http.StatusBadRequest), utils.ValidateNewRepo(name)) //nolint:errcheck
 }
 
 func renderUnauthorized(w http.ResponseWriter, r *http.Request) {
