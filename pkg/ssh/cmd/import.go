@@ -15,6 +15,7 @@ func importCommand() *cobra.Command {
 	var hidden bool
 	var lfs bool
 	var lfsEndpoint string
+	var visibility string
 
 	cmd := &cobra.Command{
 		Use:               "import REPOSITORY REMOTE",
@@ -27,7 +28,7 @@ func importCommand() *cobra.Command {
 			user := proto.UserFromContext(ctx)
 			name := args[0]
 			remote := args[1]
-			if _, err := be.ImportRepository(ctx, name, user, remote, proto.RepositoryOptions{
+			opts := proto.RepositoryOptions{
 				Private:     private,
 				Description: description,
 				ProjectName: projectName,
@@ -35,7 +36,11 @@ func importCommand() *cobra.Command {
 				Hidden:      hidden,
 				LFS:         lfs,
 				LFSEndpoint: lfsEndpoint,
-			}); err != nil {
+			}
+			if err := visibilityFlag(visibility, &opts); err != nil {
+				return err
+			}
+			if _, err := be.ImportRepository(ctx, name, user, remote, opts); err != nil {
 				return err
 			}
 
@@ -50,6 +55,7 @@ func importCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&description, "description", "d", "", "set the repository description")
 	cmd.Flags().StringVarP(&projectName, "name", "n", "", "set the project name")
 	cmd.Flags().BoolVarP(&hidden, "hidden", "H", false, "hide the repository from the UI")
+	cmd.Flags().StringVar(&visibility, "visibility", "", "set the visibility: public, unlisted or private (overrides --private and --hidden)")
 
 	return cmd
 }

@@ -92,6 +92,7 @@ Repository: repo1
 Description: desc
 Private: true
 Hidden: false
+Visibility: private
 Mirror: false
 Owner: admin
 Default Branch: master

@@ -109,6 +109,7 @@ Repository: charmbracelet/wizard-tutorial
 Description:
 Private: false
 Hidden: false
+Visibility: public
 Mirror: true
 Owner: admin
 Default Branch: main
@@ -120,6 +121,7 @@ Repository: charmbracelet/test
 Description: testing repo
 Private: true
 Hidden: true
+Visibility: private
 Mirror: true
 Owner: admin
 Default Branch: main

@@ -41,6 +41,9 @@ var repoScopedCommands = [][]string{
 	{"private", "REPO", "true"},
 	{"hidden", "REPO"},
 	{"hidden", "REPO", "true"},
+	{"visibility", "REPO"},
+	{"visibility", "REPO", "public"},
+	{"visibility", "REPO", "bogus"},
 	{"mirror", "REPO"},
 	{"mirror", "REPO", "true"},
 	{"webhook", "list", "REPO"},
@@ -144,6 +147,7 @@ func TestReaderGetsUnauthorizedForWrites(t *testing.T) {
 		{"description", "public", "new"},
 		{"private", "public", "true"},
 		{"hidden", "public", "true"},
+		{"visibility", "public", "private"},
 		{"webhook", "list", "public"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {

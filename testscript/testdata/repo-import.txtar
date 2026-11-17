@@ -33,6 +33,7 @@ Repository: repo3
 Description: descriptive
 Private: false
 Hidden: false
+Visibility: public
 Mirror: false
 Owner: admin
 Default Branch: main

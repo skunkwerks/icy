@@ -15,6 +15,7 @@ func createCommand() *cobra.Command {
 	var description string
 	var projectName string
 	var hidden bool
+	var visibility string
 
 	cmd := &cobra.Command{
 		Use:               "create REPOSITORY",
@@ -27,12 +28,16 @@ func createCommand() *cobra.Command {
 			be := backend.FromContext(ctx)
 			user := proto.UserFromContext(ctx)
 			name := args[0]
-			r, err := be.CreateRepository(ctx, name, user, proto.RepositoryOptions{
+			opts := proto.RepositoryOptions{
 				Private:     private,
 				Description: description,
 				ProjectName: projectName,
 				Hidden:      hidden,
-			})
+			}
+			if err := visibilityFlag(visibility, &opts); err != nil {
+				return err
+			}
+			r, err := be.CreateRepository(ctx, name, user, opts)
 			if err != nil {
 				return err
 			}
@@ -49,6 +54,7 @@ func createCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&description, "description", "d", "", "set the repository description")
 	cmd.Flags().StringVarP(&projectName, "name", "n", "", "set the project name")
 	cmd.Flags().BoolVarP(&hidden, "hidden", "H", false, "hide the repository from the UI")
+	cmd.Flags().StringVar(&visibility, "visibility", "", "set the visibility: public, unlisted or private (overrides --private and --hidden)")
 
 	return cmd
 }

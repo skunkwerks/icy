@@ -36,6 +36,7 @@ func RepoCommand() *cobra.Command {
 		renameCommand(),
 		tagCommand(),
 		treeCommand(),
+		visibilityCommand(),
 		webhookCommand(),
 	)
 
@@ -81,6 +82,7 @@ func RepoCommand() *cobra.Command {
 				cmd.Println(strings.TrimSpace(fmt.Sprint("Description: ", rr.Description())))
 				cmd.Println("Private:", rr.IsPrivate())
 				cmd.Println("Hidden:", rr.IsHidden())
+				cmd.Println("Visibility:", proto.VisibilityOf(rr))
 				cmd.Println("Mirror:", rr.IsMirror())
 				if owner != nil {
 					cmd.Println(strings.TrimSpace(fmt.Sprint("Owner: ", owner.Username())))
