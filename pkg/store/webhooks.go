@@ -20,6 +20,14 @@ type WebhookStore interface {
 	CreateWebhook(ctx context.Context, h db.Handler, repoID int64, url string, secret string, contentType int, active bool) (int64, error)
 	// UpdateWebhookByID updates a webhook by its ID.
 	UpdateWebhookByID(ctx context.Context, h db.Handler, repoID int64, id int64, url string, secret string, contentType int, active bool) error
+	// UpdateWebhookFormat sets the payload format of a webhook.
+	UpdateWebhookFormat(ctx context.Context, h db.Handler, repoID int64, id int64, format string) error
+	// UpdateWebhookBearerToken sets the sealed bearer token of a webhook.
+	// An empty token clears it.
+	UpdateWebhookBearerToken(ctx context.Context, h db.Handler, repoID int64, id int64, token string) error
+	// ListWebhooksWithBearerToken returns every webhook, of any repository,
+	// that has a bearer token.
+	ListWebhooksWithBearerToken(ctx context.Context, h db.Handler) ([]models.Webhook, error)
 	// DeleteWebhookByID deletes a webhook by its ID.
 	DeleteWebhookByID(ctx context.Context, h db.Handler, id int64) error
 	// DeleteWebhookForRepoByID deletes a webhook for a repository by its ID.

@@ -169,6 +169,28 @@ func (*webhookStore) UpdateWebhookByID(ctx context.Context, h db.Handler, repoID
 	return err
 }
 
+// UpdateWebhookFormat implements store.WebhookStore.
+func (*webhookStore) UpdateWebhookFormat(ctx context.Context, h db.Handler, repoID int64, id int64, format string) error {
+	query := h.Rebind(`UPDATE webhooks SET format = ?, updated_at = CURRENT_TIMESTAMP WHERE repo_id = ? AND id = ?;`)
+	_, err := h.ExecContext(ctx, query, format, repoID, id)
+	return err
+}
+
+// UpdateWebhookBearerToken implements store.WebhookStore.
+func (*webhookStore) UpdateWebhookBearerToken(ctx context.Context, h db.Handler, repoID int64, id int64, token string) error {
+	query := h.Rebind(`UPDATE webhooks SET bearer_token = ?, updated_at = CURRENT_TIMESTAMP WHERE repo_id = ? AND id = ?;`)
+	_, err := h.ExecContext(ctx, query, token, repoID, id)
+	return err
+}
+
+// ListWebhooksWithBearerToken implements store.WebhookStore.
+func (*webhookStore) ListWebhooksWithBearerToken(ctx context.Context, h db.Handler) ([]models.Webhook, error) {
+	query := h.Rebind(`SELECT * FROM webhooks WHERE bearer_token <> '' ORDER BY id;`)
+	var whs []models.Webhook
+	err := h.SelectContext(ctx, &whs, query)
+	return whs, err
+}
+
 // CreateWebhookQueueItem implements store.WebhookStore.
 func (*webhookStore) CreateWebhookQueueItem(ctx context.Context, h db.Handler, id uuid.UUID, webhookID int64, event int, contentType int, requestBody string, nextAttemptAt int64) error {
 	query := h.Rebind(`INSERT INTO webhook_queue (id, webhook_id, event, content_type, request_body, next_attempt_at)
@@ -179,7 +201,7 @@ func (*webhookStore) CreateWebhookQueueItem(ctx context.Context, h db.Handler, i
 
 // ListDueWebhookQueueItems implements store.WebhookStore.
 func (*webhookStore) ListDueWebhookQueueItems(ctx context.Context, h db.Handler, now int64, limit int) ([]models.QueuedWebhookDelivery, error) {
-	query := h.Rebind(`SELECT webhook_queue.*, webhooks.url, webhooks.secret, webhooks.active
+	query := h.Rebind(`SELECT webhook_queue.*, webhooks.url, webhooks.secret, webhooks.active, webhooks.bearer_token
 			FROM webhook_queue
 			INNER JOIN webhooks ON webhooks.id = webhook_queue.webhook_id
 			WHERE webhook_queue.next_attempt_at <= ? AND webhook_queue.locked_until <= ?

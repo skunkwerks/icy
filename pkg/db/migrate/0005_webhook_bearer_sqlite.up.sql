@@ -1,0 +1,2 @@
+ALTER TABLE webhooks ADD COLUMN bearer_token TEXT NOT NULL DEFAULT '';
+ALTER TABLE webhooks ADD COLUMN format TEXT NOT NULL DEFAULT 'icy';

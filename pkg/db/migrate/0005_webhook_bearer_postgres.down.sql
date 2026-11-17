@@ -1,0 +1,2 @@
+ALTER TABLE webhooks DROP COLUMN IF EXISTS format;
+ALTER TABLE webhooks DROP COLUMN IF EXISTS bearer_token;

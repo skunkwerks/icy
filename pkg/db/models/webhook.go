@@ -9,14 +9,19 @@ import (
 
 // Webhook is a repository webhook.
 type Webhook struct {
-	ID          int64     `db:"id"`
-	RepoID      int64     `db:"repo_id"`
-	URL         string    `db:"url"`
-	Secret      string    `db:"secret"`
-	ContentType int       `db:"content_type"`
-	Active      bool      `db:"active"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID          int64  `db:"id"`
+	RepoID      int64  `db:"repo_id"`
+	URL         string `db:"url"`
+	Secret      string `db:"secret"`
+	ContentType int    `db:"content_type"`
+	Active      bool   `db:"active"`
+	// BearerToken is the token sent in the Authorization header, sealed
+	// with the secrets key. It is empty when the webhook has no token.
+	BearerToken string `db:"bearer_token"`
+	// Format is the payload format, such as icy or buildkite.
+	Format    string    `db:"format"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 // WebhookEvent is a webhook event.
@@ -68,4 +73,8 @@ type QueuedWebhookDelivery struct {
 	URL    string `db:"url"`
 	Secret string `db:"secret"`
 	Active bool   `db:"active"`
+	// BearerToken is read from the webhook on every attempt, so a changed
+	// or cleared token takes effect at once. It is never copied into the
+	// queue.
+	BearerToken string `db:"bearer_token"`
 }
