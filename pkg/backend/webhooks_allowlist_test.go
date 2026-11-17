@@ -35,7 +35,7 @@ func TestWebhookAllowedNetworks(t *testing.T) {
 	is.NoErr(err)
 
 	create := func(url string) error {
-		return be.CreateWebhook(ctx, repo, url, webhook.ContentTypeJSON, "", []webhook.Event{webhook.EventPush}, true)
+		return be.CreateWebhook(ctx, repo, url, webhook.ContentTypeJSON, "", []webhook.Event{webhook.EventPush}, true, WebhookOptions{})
 	}
 
 	for _, url := range []string{
@@ -67,7 +67,7 @@ func TestWebhookAllowedNetworks(t *testing.T) {
 
 	id := hooks[0].ID
 	update := func(url string) error {
-		return be.UpdateWebhook(ctx, repo, id, url, webhook.ContentTypeJSON, "", []webhook.Event{webhook.EventPush}, true)
+		return be.UpdateWebhook(ctx, repo, id, url, webhook.ContentTypeJSON, "", []webhook.Event{webhook.EventPush}, true, WebhookOptions{})
 	}
 	is.NoErr(update("http://10.1.200.1/hook"))
 	if err := update("http://10.3.0.1/hook"); !errors.Is(err, ssrf.ErrPrivateIP) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/matryer/is"
+	"github.com/skunkwerks/icy/pkg/backend"
 	"github.com/skunkwerks/icy/pkg/db"
 	"github.com/skunkwerks/icy/pkg/proto"
 	"github.com/skunkwerks/icy/pkg/store"
@@ -36,7 +37,7 @@ func TestWebhookDeliveriesAreScopedToRepository(t *testing.T) {
 	victim := proto.UserFromContext(victimCtx)
 	victimRepo, err := be.CreateRepository(victimCtx, "victim-repo", victim, proto.RepositoryOptions{Private: true})
 	is.NoErr(err)
-	is.NoErr(be.CreateWebhook(victimCtx, victimRepo, "http://example.com/hook", webhook.ContentTypeJSON, "s3cret", []webhook.Event{webhook.EventPush}, true))
+	is.NoErr(be.CreateWebhook(victimCtx, victimRepo, "http://example.com/hook", webhook.ContentTypeJSON, "s3cret", []webhook.Event{webhook.EventPush}, true, backend.WebhookOptions{}))
 
 	victimHooks, err := be.ListWebhooks(victimCtx, victimRepo)
 	is.NoErr(err)

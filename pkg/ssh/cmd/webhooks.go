@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/skunkwerks/icy/pkg/access"
 	"github.com/skunkwerks/icy/pkg/backend"
+	"github.com/skunkwerks/icy/pkg/proto"
 	"github.com/skunkwerks/icy/pkg/utils"
 	"github.com/skunkwerks/icy/pkg/webhook"
 	"github.com/spf13/cobra"
@@ -24,6 +26,7 @@ func webhookCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		webhookListCommand(),
+		webhookInfoCommand(),
 		webhookCreateCommand(),
 		webhookDeleteCommand(),
 		webhookUpdateCommand(),
@@ -62,7 +65,7 @@ func webhookListCommand() *cobra.Command {
 				return err
 			}
 
-			table := table.New().Headers("ID", "URL", "Events", "Active", "Created At", "Updated At")
+			table := table.New().Headers("ID", "URL", "Events", "Format", "Auth", "Active", "Created At", "Updated At")
 			for _, h := range webhooks {
 				events := make([]string, len(h.Events))
 				for i, e := range h.Events {
@@ -73,6 +76,8 @@ func webhookListCommand() *cobra.Command {
 					strconv.FormatInt(h.ID, 10),
 					utils.Sanitize(h.URL),
 					strings.Join(events, ","),
+					webhook.FormatOf(h.Format).String(),
+					webhookAuth(h),
 					strconv.FormatBool(h.Active),
 					humanize.Time(h.CreatedAt),
 					humanize.Time(h.UpdatedAt),
@@ -91,6 +96,8 @@ func webhookCreateCommand() *cobra.Command {
 	var secret string
 	var active bool
 	var contentType string
+	var format string
+	var bearerStdin bool
 	cmd := &cobra.Command{
 		Use:               "create REPOSITORY URL",
 		Short:             "Create a repository webhook",
@@ -124,8 +131,20 @@ func webhookCreateCommand() *cobra.Command {
 				return webhook.ErrInvalidContentType
 			}
 
+			opts := backend.WebhookOptions{}
+			if opts.Format, err = webhook.ParseFormat(format); err != nil {
+				return err
+			}
+			if bearerStdin {
+				token, err := readBearerToken(cmd)
+				if err != nil {
+					return err
+				}
+				opts.BearerToken = &token
+			}
+
 			url := utils.Sanitize(args[1])
-			return be.CreateWebhook(ctx, repo, strings.TrimSpace(url), ct, secret, evs, active)
+			return be.CreateWebhook(ctx, repo, strings.TrimSpace(url), ct, secret, evs, active, opts)
 		},
 	}
 
@@ -133,6 +152,8 @@ func webhookCreateCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&secret, "secret", "s", "", "secret to sign the webhook payload")
 	cmd.Flags().BoolVarP(&active, "active", "a", true, "whether the webhook is active")
 	cmd.Flags().StringVarP(&contentType, "content-type", "c", "json", "content type of the webhook payload, can be either `json` or `form`")
+	cmd.Flags().StringVar(&format, "format", "icy", "payload format, can be either `icy` or `buildkite`")
+	cmd.Flags().BoolVar(&bearerStdin, "bearer-stdin", false, "read a bearer token from stdin and send it in the Authorization header (server admins only)")
 
 	return cmd
 }
@@ -169,6 +190,9 @@ func webhookUpdateCommand() *cobra.Command {
 	var active string
 	var contentType string
 	var url string
+	var format string
+	var bearerStdin bool
+	var noBearer bool
 	cmd := &cobra.Command{
 		Use:               "update REPOSITORY WEBHOOK_ID",
 		Short:             "Update a repository webhook",
@@ -195,6 +219,11 @@ func webhookUpdateCommand() *cobra.Command {
 			newURL := wh.URL
 			if url != "" {
 				newURL = url
+			}
+			// Moving a webhook would send its token to the new URL, so
+			// only those who may set a token may move it.
+			if newURL != wh.URL && wh.BearerToken != "" && !isServerAdmin(ctx) {
+				return proto.ErrUnauthorized
 			}
 
 			newSecret := wh.Secret
@@ -241,7 +270,27 @@ func webhookUpdateCommand() *cobra.Command {
 				newEvents = evs
 			}
 
-			return be.UpdateWebhook(ctx, repo, id, newURL, newContentType, newSecret, newEvents, newActive)
+			opts := backend.WebhookOptions{}
+			if format != "" {
+				if opts.Format, err = webhook.ParseFormat(format); err != nil {
+					return err
+				}
+			}
+			switch {
+			case bearerStdin:
+				token, err := readBearerToken(cmd)
+				if err != nil {
+					return err
+				}
+				opts.BearerToken = &token
+			case noBearer:
+				if !isServerAdmin(ctx) {
+					return proto.ErrUnauthorized
+				}
+				opts.BearerToken = new(string)
+			}
+
+			return be.UpdateWebhook(ctx, repo, id, newURL, newContentType, newSecret, newEvents, newActive, opts)
 		},
 	}
 
@@ -250,6 +299,94 @@ func webhookUpdateCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&active, "active", "a", "", "whether the webhook is active")
 	cmd.Flags().StringVarP(&contentType, "content-type", "c", "", "content type of the webhook payload, can be either `json` or `form`")
 	cmd.Flags().StringVarP(&url, "url", "u", "", "webhook URL")
+	cmd.Flags().StringVar(&format, "format", "", "payload format, can be either `icy` or `buildkite`")
+	cmd.Flags().BoolVar(&bearerStdin, "bearer-stdin", false, "read a new bearer token from stdin (server admins only)")
+	cmd.Flags().BoolVar(&noBearer, "no-bearer", false, "remove the bearer token (server admins only)")
+	cmd.MarkFlagsMutuallyExclusive("bearer-stdin", "no-bearer")
+
+	return cmd
+}
+
+// maxBearerInput caps how much of stdin is read for a bearer token.
+const maxBearerInput = 8 << 10
+
+// readBearerToken reads a bearer token from the command's stdin, so it
+// never shows up in argv, shell history or logs. Only server admins may
+// set one. One trailing newline is trimmed.
+func readBearerToken(cmd *cobra.Command) (string, error) {
+	if !isServerAdmin(cmd.Context()) {
+		return "", proto.ErrUnauthorized
+	}
+	b, err := io.ReadAll(io.LimitReader(cmd.InOrStdin(), maxBearerInput+1))
+	if err != nil {
+		return "", fmt.Errorf("read bearer token: %w", err)
+	}
+	if len(b) > maxBearerInput {
+		return "", webhook.ErrInvalidBearerToken
+	}
+	token := strings.TrimSuffix(string(b), "\n")
+	token = strings.TrimSuffix(token, "\r")
+	if err := webhook.ValidateBearerToken(token); err != nil {
+		return "", err //nolint:wrapcheck
+	}
+	return token, nil
+}
+
+// webhookAuth describes a webhook's authentication without showing it.
+func webhookAuth(h webhook.Hook) string {
+	if h.BearerToken != "" {
+		return "bearer (set)"
+	}
+	return ""
+}
+
+func webhookInfoCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "info REPOSITORY WEBHOOK_ID",
+		Short:             "Show a repository webhook",
+		Args:              cobra.ExactArgs(2),
+		PersistentPreRunE: requireRepo(access.AdminAccess),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			be := backend.FromContext(ctx)
+			repo, _, err := repoFromContext(ctx)
+			if err != nil {
+				return err
+			}
+
+			id, err := strconv.ParseInt(args[1], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid webhook ID: %w", err)
+			}
+
+			h, err := be.Webhook(ctx, repo, id)
+			if err != nil {
+				return err
+			}
+
+			events := make([]string, len(h.Events))
+			for i, e := range h.Events {
+				events[i] = e.String()
+			}
+			secret := ""
+			if h.Secret != "" {
+				secret = "(set)"
+			}
+
+			out := cmd.OutOrStdout()
+			fmt.Fprintf(out, "ID: %d\n", h.ID)                               //nolint:errcheck
+			fmt.Fprintf(out, "URL: %s\n", utils.Sanitize(h.URL))             //nolint:errcheck
+			fmt.Fprintf(out, "Events: %s\n", strings.Join(events, ","))      //nolint:errcheck
+			fmt.Fprintf(out, "Format: %s\n", webhook.FormatOf(h.Format))     //nolint:errcheck
+			fmt.Fprintf(out, "Content Type: %s\n", h.ContentType)            //nolint:errcheck
+			fmt.Fprintf(out, "Secret: %s\n", secret)                         //nolint:errcheck
+			fmt.Fprintf(out, "Auth: %s\n", webhookAuth(h))                   //nolint:errcheck
+			fmt.Fprintf(out, "Active: %t\n", h.Active)                       //nolint:errcheck
+			fmt.Fprintf(out, "Created At: %s\n", humanize.Time(h.CreatedAt)) //nolint:errcheck
+			fmt.Fprintf(out, "Updated At: %s\n", humanize.Time(h.UpdatedAt)) //nolint:errcheck
+			return nil
+		},
+	}
 
 	return cmd
 }

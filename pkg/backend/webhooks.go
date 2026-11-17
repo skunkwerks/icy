@@ -2,11 +2,13 @@ package backend
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/skunkwerks/icy/pkg/db"
 	"github.com/skunkwerks/icy/pkg/db/models"
 	"github.com/skunkwerks/icy/pkg/proto"
+	"github.com/skunkwerks/icy/pkg/secrets"
 	"github.com/skunkwerks/icy/pkg/ssrf"
 	"github.com/skunkwerks/icy/pkg/store"
 	"github.com/skunkwerks/icy/pkg/utils"
@@ -22,8 +24,20 @@ func (b *Backend) webhookAllowlist() ssrf.AllowedNetworks {
 	return b.cfg.Webhook.Allowlist()
 }
 
+// WebhookOptions are the webhook settings that go beyond the URL, content
+// type, secret, events and active flag.
+type WebhookOptions struct {
+	// Format is the payload format. When empty, CreateWebhook uses the icy
+	// format and UpdateWebhook keeps the current one.
+	Format webhook.Format
+	// BearerToken is the token to send in the Authorization header, in
+	// clear text. nil keeps the current token, and a pointer to "" clears
+	// it. Callers must allow only server admins to set it.
+	BearerToken *string
+}
+
 // CreateWebhook creates a webhook for a repository.
-func (b *Backend) CreateWebhook(ctx context.Context, repo proto.Repository, url string, contentType webhook.ContentType, secret string, events []webhook.Event, active bool) error {
+func (b *Backend) CreateWebhook(ctx context.Context, repo proto.Repository, url string, contentType webhook.ContentType, secret string, events []webhook.Event, active bool, opts WebhookOptions) error {
 	dbx := db.FromContext(ctx)
 	datastore := store.FromContext(ctx)
 	url = utils.Sanitize(url)
@@ -31,6 +45,22 @@ func (b *Backend) CreateWebhook(ctx context.Context, repo proto.Repository, url 
 	// Validate webhook URL to prevent SSRF attacks
 	if err := webhook.ValidateWebhookURLWithAllowlist(url, b.webhookAllowlist()); err != nil {
 		return err //nolint:wrapcheck
+	}
+
+	format := opts.Format
+	if format == "" {
+		format = webhook.FormatIcy
+	}
+	if err := webhook.ValidateFormat(format, events, contentType); err != nil {
+		return err //nolint:wrapcheck
+	}
+
+	var sealed string
+	if opts.BearerToken != nil && *opts.BearerToken != "" {
+		var err error
+		if sealed, err = b.sealBearerToken(url, *opts.BearerToken); err != nil {
+			return err
+		}
 	}
 
 	return dbx.TransactionContext(ctx, func(tx *db.Tx) error {
@@ -47,8 +77,34 @@ func (b *Backend) CreateWebhook(ctx context.Context, repo proto.Repository, url 
 			return db.WrapError(err)
 		}
 
+		if err := datastore.UpdateWebhookFormat(ctx, tx, repo.ID(), lastID, format.String()); err != nil {
+			return db.WrapError(err)
+		}
+		if sealed != "" {
+			if err := datastore.UpdateWebhookBearerToken(ctx, tx, repo.ID(), lastID, sealed); err != nil {
+				return db.WrapError(err)
+			}
+		}
+
 		return nil
 	})
+}
+
+// sealBearerToken checks that token may be sent to url and encrypts it
+// with the secrets key.
+func (b *Backend) sealBearerToken(url, token string) (string, error) {
+	if err := webhook.ValidateBearerToken(token); err != nil {
+		return "", err //nolint:wrapcheck
+	}
+	if err := webhook.ValidateBearerURL(url, b.webhookAllowlist()); err != nil {
+		return "", err //nolint:wrapcheck
+	}
+	key, err := secrets.LoadKey(b.secretsKeyPath())
+	if err != nil {
+		b.logger.Error("cannot read the secrets key", "err", err)
+		return "", errors.New("cannot store the bearer token: the server's secrets key is not readable")
+	}
+	return secrets.Encrypt(key, []byte(token)) //nolint:wrapcheck
 }
 
 // Webhook returns a webhook for a repository.
@@ -129,7 +185,7 @@ func (b *Backend) ListWebhooks(ctx context.Context, repo proto.Repository) ([]we
 }
 
 // UpdateWebhook updates a webhook.
-func (b *Backend) UpdateWebhook(ctx context.Context, repo proto.Repository, id int64, url string, contentType webhook.ContentType, secret string, updatedEvents []webhook.Event, active bool) error {
+func (b *Backend) UpdateWebhook(ctx context.Context, repo proto.Repository, id int64, url string, contentType webhook.ContentType, secret string, updatedEvents []webhook.Event, active bool, opts WebhookOptions) error {
 	dbx := db.FromContext(ctx)
 	datastore := store.FromContext(ctx)
 
@@ -138,9 +194,46 @@ func (b *Backend) UpdateWebhook(ctx context.Context, repo proto.Repository, id i
 		return err
 	}
 
+	current, err := datastore.GetWebhookByID(ctx, dbx, repo.ID(), id)
+	if err != nil {
+		return db.WrapError(err)
+	}
+
+	format := opts.Format
+	if format == "" {
+		format = webhook.FormatOf(current.Format)
+	}
+	if err := webhook.ValidateFormat(format, updatedEvents, contentType); err != nil {
+		return err //nolint:wrapcheck
+	}
+
+	// The token is checked against the URL when it is set, and when the
+	// URL of a webhook that keeps its token changes.
+	sealed := current.BearerToken
+	switch {
+	case opts.BearerToken != nil && *opts.BearerToken == "":
+		sealed = ""
+	case opts.BearerToken != nil:
+		if sealed, err = b.sealBearerToken(url, *opts.BearerToken); err != nil {
+			return err
+		}
+	case sealed != "" && url != current.URL:
+		if err := webhook.ValidateBearerURL(url, b.webhookAllowlist()); err != nil {
+			return err //nolint:wrapcheck
+		}
+	}
+
 	return dbx.TransactionContext(ctx, func(tx *db.Tx) error {
 		if err := datastore.UpdateWebhookByID(ctx, tx, repo.ID(), id, url, secret, int(contentType), active); err != nil {
 			return db.WrapError(err)
+		}
+		if err := datastore.UpdateWebhookFormat(ctx, tx, repo.ID(), id, format.String()); err != nil {
+			return db.WrapError(err)
+		}
+		if opts.BearerToken != nil {
+			if err := datastore.UpdateWebhookBearerToken(ctx, tx, repo.ID(), id, sealed); err != nil {
+				return db.WrapError(err)
+			}
 		}
 
 		currentEvents, err := datastore.GetWebhookEventsByWebhookID(ctx, tx, id)
