@@ -179,6 +179,26 @@ web:
 jobs:
   mirror_pull: "{{ .Jobs.MirrorPull }}"
 
+# Repository webhook configuration.
+webhook:
+  # Private or internal networks that webhooks may reach, such as a CI
+  # server on the LAN. Webhooks to private, loopback, link-local and other
+  # internal addresses are refused unless the address is listed here.
+  # Entries are CIDR prefixes or single IP addresses, not hostnames.
+  allowed_networks:
+{{- range .Webhook.AllowedNetworks }}
+    - "{{ . }}"
+{{- else }} []
+    # - "10.0.0.0/8"
+    # - "192.168.1.20"
+{{- end }}
+
+  # How many times a delivery is tried before it is given up.
+  max_attempts: {{ .Webhook.MaxAttempts }}
+
+  # The wait after the first failed attempt. It doubles after each failure.
+  retry_backoff: "{{ .Webhook.RetryBackoff }}"
+
 # Additional admin keys.
 #initial_admin_keys:
 #  - "ssh-rsa AAAAB3NzaC1yc2..."

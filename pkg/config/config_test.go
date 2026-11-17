@@ -2,6 +2,8 @@ package config
 
 import (
 	"os"
+	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/matryer/is"
@@ -290,5 +292,88 @@ func TestValidateParsesAllowedHosts(t *testing.T) {
 	cfg.SSH.ClientAllowedHosts = []string{"10.0.0.0/99"}
 	if err := cfg.Validate(); err == nil {
 		t.Error("Validate() accepted an invalid network")
+	}
+}
+
+func TestValidateParsesWebhookAllowedNetworks(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.DataPath = t.TempDir()
+	if len(cfg.Webhook.Allowlist()) != 0 {
+		t.Fatal("allowlist populated before Validate")
+	}
+
+	cfg.Webhook.AllowedNetworks = []string{"10.0.0.0/8", "", "192.168.1.20", " "}
+	if err := cfg.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if got := cfg.Webhook.AllowedNetworks; len(got) != 2 {
+		t.Errorf("blank entries kept: %q", got)
+	}
+	if got := cfg.Webhook.Allowlist(); len(got) != 2 {
+		t.Errorf("parsed %d entries, want 2", len(got))
+	}
+
+	for _, bad := range []string{"ci.internal.example", "10.0.0.0/99", "10.0.0.1:80"} {
+		cfg.Webhook.AllowedNetworks = []string{bad}
+		if err := cfg.Validate(); err == nil {
+			t.Errorf("Validate() accepted %q", bad)
+		}
+	}
+
+	cfg.Webhook.AllowedNetworks = nil
+	cfg.Webhook.MaxAttempts = -1
+	if err := cfg.Validate(); err == nil {
+		t.Error("Validate() accepted a negative max_attempts")
+	}
+}
+
+func TestParseWebhookEnv(t *testing.T) {
+	t.Setenv("ICY_DATA_PATH", t.TempDir())
+	t.Setenv("ICY_WEBHOOK_ALLOWED_NETWORKS", "10.0.0.0/8,fd00::/8")
+	t.Setenv("ICY_WEBHOOK_MAX_ATTEMPTS", "3")
+	t.Setenv("ICY_WEBHOOK_RETRY_BACKOFF", "30s")
+	cfg := DefaultConfig()
+	if err := cfg.ParseEnv(); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(cfg.Webhook.Allowlist()); got != 2 {
+		t.Errorf("parsed %d networks, want 2", got)
+	}
+	if cfg.Webhook.MaxAttempts != 3 {
+		t.Errorf("MaxAttempts = %d, want 3", cfg.Webhook.MaxAttempts)
+	}
+	if cfg.Webhook.RetryBackoff.String() != "30s" {
+		t.Errorf("RetryBackoff = %s, want 30s", cfg.Webhook.RetryBackoff)
+	}
+
+	// The environment the server hands to hooks reads back the same.
+	env := cfg.Environ()
+	for _, want := range []string{
+		"ICY_WEBHOOK_ALLOWED_NETWORKS=10.0.0.0/8,fd00::/8",
+		"ICY_WEBHOOK_MAX_ATTEMPTS=3",
+		"ICY_WEBHOOK_RETRY_BACKOFF=30s",
+	} {
+		if !slices.Contains(env, want) {
+			t.Errorf("Environ() missing %q", want)
+		}
+	}
+}
+
+func TestWebhookConfigFileRoundTrip(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.DataPath = t.TempDir()
+	cfg.Webhook.AllowedNetworks = []string{"10.0.0.0/8"}
+	path := filepath.Join(cfg.DataPath, "config.yaml")
+	if err := writeConfig(cfg, path); err != nil {
+		t.Fatal(err)
+	}
+
+	got := DefaultConfig()
+	got.DataPath = cfg.DataPath
+	if err := parseFile(got, path); err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Webhook.Allowlist()) != 1 || got.Webhook.MaxAttempts != 5 || got.Webhook.RetryBackoff != cfg.Webhook.RetryBackoff {
+		t.Errorf("round trip lost webhook config: %+v", got.Webhook)
 	}
 }

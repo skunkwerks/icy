@@ -171,6 +171,31 @@ type JobsConfig struct {
 	MirrorPull string `env:"MIRROR_PULL" yaml:"mirror_pull"`
 }
 
+// WebhookConfig is the configuration for repository webhooks.
+type WebhookConfig struct {
+	// AllowedNetworks lists IP prefixes or single addresses that webhooks
+	// may reach even though they are private or internal, such as a CI
+	// server on the LAN. Hostnames are not accepted.
+	AllowedNetworks []string `env:"ALLOWED_NETWORKS" yaml:"allowed_networks"`
+
+	// MaxAttempts is how many times a delivery is tried before it is
+	// given up.
+	MaxAttempts int `env:"MAX_ATTEMPTS" yaml:"max_attempts"`
+
+	// RetryBackoff is the wait after the first failed attempt. It doubles
+	// after each further failure.
+	RetryBackoff time.Duration `env:"RETRY_BACKOFF" yaml:"retry_backoff"`
+
+	// allowedNetworks is AllowedNetworks parsed by Validate.
+	allowedNetworks ssrf.AllowedNetworks
+}
+
+// Allowlist returns the parsed webhook network allowlist. It is empty until
+// Validate has run.
+func (c *WebhookConfig) Allowlist() ssrf.AllowedNetworks {
+	return c.allowedNetworks
+}
+
 // Config is the configuration for Icy.
 type Config struct {
 	// Name is the name of the server.
@@ -202,6 +227,8 @@ type Config struct {
 
 	// Web is the configuration for the web UI.
 	Web WebConfig `envPrefix:"WEB_" yaml:"web"`
+	// Webhook is the configuration for repository webhooks.
+	Webhook WebhookConfig `envPrefix:"WEBHOOK_" yaml:"webhook"`
 
 	// InitialAdminKeys is a list of public keys that will be added to the list of admins.
 	InitialAdminKeys []string `env:"INITIAL_ADMIN_KEYS" envSeparator:"\n" yaml:"initial_admin_keys"`
@@ -284,6 +311,9 @@ func (c *Config) Environ() []string {
 		fmt.Sprintf("ICY_WEB_ENABLED=%t", c.Web.Enabled),
 		fmt.Sprintf("ICY_WEB_OWNER=%s", c.Web.Owner),
 		fmt.Sprintf("ICY_WEB_DESCRIPTION=%s", c.Web.Description),
+		fmt.Sprintf("ICY_WEBHOOK_ALLOWED_NETWORKS=%s", strings.Join(c.Webhook.AllowedNetworks, ",")),
+		fmt.Sprintf("ICY_WEBHOOK_MAX_ATTEMPTS=%d", c.Webhook.MaxAttempts),
+		fmt.Sprintf("ICY_WEBHOOK_RETRY_BACKOFF=%s", c.Webhook.RetryBackoff),
 	}...)
 
 	// AnonAccess and AllowKeyless are tri-state overrides: only emit them
@@ -476,6 +506,10 @@ func DefaultConfig() *Config {
 		Web: WebConfig{
 			Enabled: true,
 		},
+		Webhook: WebhookConfig{
+			MaxAttempts:  5,
+			RetryBackoff: 2 * time.Minute,
+		},
 	}
 }
 
@@ -531,6 +565,10 @@ func (c *Config) Validate() error {
 	}
 	c.SSH.allowedHosts = allowed
 
+	if err := c.Webhook.validate(); err != nil {
+		return err
+	}
+
 	if c.HTTP.TLSKeyPath != "" && !filepath.IsAbs(c.HTTP.TLSKeyPath) {
 		c.HTTP.TLSKeyPath = filepath.Join(c.DataPath, c.HTTP.TLSKeyPath)
 	}
@@ -554,6 +592,32 @@ func (c *Config) Validate() error {
 
 	c.HTTP.CORS.AllowedOrigins = append([]string{c.HTTP.PublicURL}, c.HTTP.CORS.AllowedOrigins...)
 
+	return nil
+}
+
+// validate parses the webhook allowlist and fills in retry defaults.
+func (c *WebhookConfig) validate() error {
+	c.AllowedNetworks = slices.DeleteFunc(slices.Clone(c.AllowedNetworks), func(s string) bool {
+		return strings.TrimSpace(s) == ""
+	})
+	nets, err := ssrf.ParseAllowedNetworks(c.AllowedNetworks)
+	if err != nil {
+		return fmt.Errorf("webhook.allowed_networks: %w", err)
+	}
+	c.allowedNetworks = nets
+
+	switch {
+	case c.MaxAttempts == 0:
+		c.MaxAttempts = 5
+	case c.MaxAttempts < 0:
+		return fmt.Errorf("webhook.max_attempts: must be at least 1, got %d", c.MaxAttempts)
+	}
+	switch {
+	case c.RetryBackoff == 0:
+		c.RetryBackoff = 2 * time.Minute
+	case c.RetryBackoff < 0:
+		return fmt.Errorf("webhook.retry_backoff: must be positive, got %s", c.RetryBackoff)
+	}
 	return nil
 }
 
