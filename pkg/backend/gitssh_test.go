@@ -46,14 +46,14 @@ func TestGitSSHCommandEnv(t *testing.T) {
 			// or known_hosts ends up at a relative "Support/..." path.
 			name: "space in data path",
 			cfg: config.Config{
-				DataPath: "/Users/me/Library/Application Support/soft-serve",
+				DataPath: "/Users/me/Library/Application Support/icy",
 				SSH: config.SSHConfig{
-					ClientKeyPath:               "/Users/me/Library/Application Support/soft-serve/ssh/client_ed25519",
+					ClientKeyPath:               "/Users/me/Library/Application Support/icy/ssh/client_ed25519",
 					ClientStrictHostKeyChecking: config.StrictHostKeyCheckingAcceptNew,
 				},
 			},
-			want: `GIT_SSH_COMMAND=ssh -o 'UserKnownHostsFile="/Users/me/Library/Application Support/soft-serve/ssh/known_hosts"'` +
-				` -o StrictHostKeyChecking=accept-new -o BatchMode=yes -i '/Users/me/Library/Application Support/soft-serve/ssh/client_ed25519'`,
+			want: `GIT_SSH_COMMAND=ssh -o 'UserKnownHostsFile="/Users/me/Library/Application Support/icy/ssh/known_hosts"'` +
+				` -o StrictHostKeyChecking=accept-new -o BatchMode=yes -i '/Users/me/Library/Application Support/icy/ssh/client_ed25519'`,
 		},
 		{
 			// $ and backticks must not expand in the shell; ' must survive

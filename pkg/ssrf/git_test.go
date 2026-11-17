@@ -31,7 +31,7 @@ func TestValidateGitRemote(t *testing.T) {
 		// SSH is reachability-governed by the operator's client key, and
 		// here by a policy that allows any host.
 		{"ssh url", "ssh://git@10.0.0.1/x.git", GitTransportSSH, nil},
-		{"bare ssh", "git@github.com:charmbracelet/soft-serve.git", GitTransportSSH, nil},
+		{"bare ssh", "git@github.com:skunkwerks/icy.git", GitTransportSSH, nil},
 		{"git+ssh", "git+ssh://git@example.com/x.git", GitTransportSSH, nil},
 		{"ssh+git", "ssh+git://git@example.com/x.git", GitTransportSSH, nil},
 
@@ -78,7 +78,7 @@ func TestValidateGitRemote(t *testing.T) {
 		{"unparseable http space", "http://a b@127.0.0.1/", 0, ErrInvalidURL},
 
 		// scp-style remotes that are really SSH.
-		{"bare ssh no user", "github.com:charmbracelet/soft-serve.git", GitTransportSSH, nil},
+		{"bare ssh no user", "github.com:skunkwerks/icy.git", GitTransportSSH, nil},
 		{"bare ssh ipv6", "git@[::1]:x.git", GitTransportSSH, nil},
 		{"bare ssh bracketed host port", "[git@example.com:2222]:x.git", GitTransportSSH, nil},
 		{"bare ssh brace in user", "a{b@127.0.0.1:x", GitTransportSSH, nil},

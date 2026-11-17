@@ -79,7 +79,7 @@ func TestValidateImportRemote(t *testing.T) {
 		{"ssh allowed by name", "ssh://git@git.internal.example/x.git", listed, nil},
 		{"ssh allowed by cidr", "git@10.1.1.1:x.git", listed, nil},
 		{"ssh not on allowlist", "ssh://git@evil.example/x.git", listed, proto.ErrInvalidRemote},
-		{"scp no user", "github.com:charmbracelet/soft-serve.git", admin, nil},
+		{"scp no user", "github.com:skunkwerks/icy.git", admin, nil},
 		{"scp ipv6", "git@[::1]:x.git", admin, nil},
 
 		{"loopback", "http://127.0.0.1/x.git", nobody, proto.ErrInvalidRemote},

@@ -29,7 +29,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	tmp, err := os.MkdirTemp("", "soft-serve-test")
+	tmp, err := os.MkdirTemp("", "icy-test")
 	if err != nil {
 		log.Fatal(err)
 	}

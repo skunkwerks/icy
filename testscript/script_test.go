@@ -44,7 +44,7 @@ func PrepareBuildCommand(binPath string) *exec.Cmd {
 }
 
 func TestMain(m *testing.M) {
-	tmp, err := os.MkdirTemp("", "soft-serve*")
+	tmp, err := os.MkdirTemp("", "icy*")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create temporary directory: %s", err)
 		os.Exit(1)
@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 	// Build the icy binary with -cover flag.
 	cmd := PrepareBuildCommand(binPath)
 	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to build soft-serve binary: %s", err)
+		fmt.Fprintf(os.Stderr, "failed to build icy binary: %s", err)
 		os.Exit(1)
 	}
 
@@ -598,7 +598,7 @@ func setupPostgres(t testscript.T, cfg *config.Config) (func(), error) {
 	// Indicates postgres
 	// Create a disposable database
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	dbName := fmt.Sprintf("softserve_test_%d", rnd.Int63())
+	dbName := fmt.Sprintf("icy_test_%d", rnd.Int63())
 	dbDsn := cfg.DB.DataSource
 	if dbDsn == "" {
 		cfg.DB.DataSource = "postgres://postgres@localhost:5432/postgres?sslmode=disable"
