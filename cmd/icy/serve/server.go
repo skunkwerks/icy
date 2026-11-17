@@ -154,6 +154,10 @@ func ensureDefaultRepo(ctx context.Context, cfg *config.Config, be *backend.Back
 	if cfg.DefaultRepo == "" {
 		return
 	}
+	if cfg.StateFromConfig() {
+		logger.Warn(`default_repo is ignored when state_source is "config", list the repository under repos instead`, "name", cfg.DefaultRepo)
+		return
+	}
 
 	name := utils.SanitizeRepo(cfg.DefaultRepo)
 	if err := utils.ValidateRepo(name); err != nil {

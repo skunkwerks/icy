@@ -20,7 +20,8 @@ import (
 )
 
 var (
-	syncHooks bool
+	syncHooks   bool
+	stateSource string
 
 	// Command is the serve command.
 	Command = &cobra.Command{
@@ -69,6 +70,15 @@ var (
 				return fmt.Errorf("migration error: %w", err)
 			}
 
+			// The backend holds the config from the context, so the
+			// flag has to land there.
+			if err := config.FromContext(ctx).SetStateSource(stateSource); err != nil {
+				return err
+			}
+			if err := applyConfigState(ctx); err != nil {
+				return err
+			}
+
 			s, err := NewServer(ctx)
 			if err != nil {
 				return fmt.Errorf("start server: %w", err)
@@ -84,6 +94,7 @@ var (
 			lch := make(chan error, 1)
 			done := make(chan os.Signal, 1)
 			testStop := make(chan struct{})
+			testReload := make(chan chan struct{})
 
 			signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -95,6 +106,14 @@ var (
 				s.HTTPServer.Server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == "/__stop" && r.Method == http.MethodHead {
 						close(testStop)
+						return
+					}
+					// Stands in for SIGHUP, which Windows lacks, and
+					// answers once the reload is done.
+					if r.URL.Path == "/__reload" && r.Method == http.MethodHead {
+						reloaded := make(chan struct{})
+						testReload <- reloaded
+						<-reloaded
 						return
 					}
 					h.ServeHTTP(w, r)
@@ -119,10 +138,14 @@ var (
 						if err := s.ReloadCertificates(); err != nil {
 							s.logger.Error("failed to reload TLS certificates", "err", err)
 						}
+						s.ReloadState()
 						continue
 					}
 					// Real signal received; shut down
 					goto shutdown
+				case reloaded := <-testReload:
+					s.ReloadState()
+					close(reloaded)
 				case <-testStop:
 					// Test hook triggered; shut down
 					goto shutdown
@@ -143,6 +166,7 @@ var (
 
 func init() {
 	Command.Flags().BoolVarP(&syncHooks, "sync-hooks", "", false, "synchronize hooks for all repositories before running the server")
+	Command.Flags().StringVar(&stateSource, "state-source", "", `where users, repositories and access come from, "db" or "config" (default from ICY_STATE_SOURCE or state_source in config.yaml, else "db")`)
 }
 
 const updateHookExample = `#!/bin/sh
