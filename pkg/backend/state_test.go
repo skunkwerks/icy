@@ -14,9 +14,11 @@ import (
 	"github.com/matryer/is"
 	"github.com/skunkwerks/icy/pkg/access"
 	"github.com/skunkwerks/icy/pkg/config"
+	"github.com/skunkwerks/icy/pkg/db"
 	"github.com/skunkwerks/icy/pkg/proto"
 	"github.com/skunkwerks/icy/pkg/sshutils"
 	"github.com/skunkwerks/icy/pkg/statefile"
+	"github.com/skunkwerks/icy/pkg/utils"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -387,4 +389,47 @@ func TestApplyConfigStateRefusesBadFile(t *testing.T) {
 	is.Equal(users, []string{"admin"})
 	_, err = be.Repository(ctx, "keep")
 	is.NoErr(err)
+}
+
+func TestApplyStateReservedNames(t *testing.T) {
+	is := is.New(t)
+	be, _ := newTestBackend(t)
+	ctx := context.Background()
+	k := stateKey(t, 1)
+
+	// A new repository with a reserved segment is refused, and the
+	// whole apply is rolled back.
+	st := checkState(t, `
+users:
+  - name: alice
+    admin: true
+    public_keys: ["`+k+`"]
+repos:
+  - name: fine
+  - name: org/tree
+`)
+	_, err := be.ApplyState(ctx, st)
+	is.True(errors.Is(err, utils.ErrReservedRepoName))
+	repos, err := be.Repositories(ctx)
+	is.NoErr(err)
+	is.Equal(len(repos), 0)
+
+	// A repository that already has a reserved segment keeps its name.
+	is.NoErr(be.db.TransactionContext(ctx, func(tx *db.Tx) error {
+		return be.store.CreateRepo(ctx, tx, "docs/log", 1, "", "", false, false, false)
+	}))
+	st = checkState(t, `
+users:
+  - name: alice
+    admin: true
+    public_keys: ["`+k+`"]
+repos:
+  - name: docs/log
+    description: kept
+`)
+	_, err = be.ApplyState(ctx, st)
+	is.NoErr(err)
+	r, err := be.Repository(ctx, "docs/log")
+	is.NoErr(err)
+	is.Equal(r.Description(), "kept")
 }

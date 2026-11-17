@@ -22,6 +22,7 @@ import (
 	"github.com/skunkwerks/icy/pkg/proto"
 	"github.com/skunkwerks/icy/pkg/sshutils"
 	"github.com/skunkwerks/icy/pkg/statefile"
+	"github.com/skunkwerks/icy/pkg/utils"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -200,6 +201,11 @@ func (d *Backend) applyState(ctx context.Context, tx *db.Tx, st *statefile.State
 		ownerID := userIDs[r.Owner]
 		have, ok := haveRepos[r.Name]
 		if !ok {
+			// A name chosen now must avoid the segments that the web UI
+			// reserves. Repositories that already exist keep their names.
+			if err := utils.ValidateNewRepo(r.Name); err != nil {
+				return nil, fmt.Errorf("create repository %s: %w", r.Name, err)
+			}
 			if err := d.store.CreateRepo(ctx, tx, r.Name, ownerID, r.ProjectName, r.Description, r.Private, r.Hidden, false); err != nil {
 				return nil, fmt.Errorf("create repository %s: %w", r.Name, err)
 			}
