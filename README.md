@@ -22,48 +22,16 @@ A tasty, self-hostable Git server for the command line. 🍦
 
 ## Installation
 
-Icy is a single binary called `icy`. You can get it from a package
-manager:
-
-```bash
-# macOS or Linux
-brew install charmbracelet/tap/icy
-
-# Windows (with Winget)
-winget install charmbracelet.icy
-
-# Arch Linux
-pacman -S icy
-
-# Nix
-nix-env -iA nixpkgs.icy
-
-# Debian/Ubuntu
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
-echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
-sudo apt update && sudo apt install icy
-
-# Fedora/RHEL
-echo '[charm]
-name=Charm
-baseurl=https://repo.charm.sh/yum/
-enabled=1
-gpgcheck=1
-gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
-sudo yum install icy
-```
-
-You can also download a binary from the [releases][releases] page. Packages are
-available in Alpine, Debian, and RPM formats. Binaries are available for Linux,
-macOS, and Windows.
-
-[releases]: https://github.com/skunkwerks/icy/releases
-
-Or just install it with `go`:
+Icy is a single binary called `icy`. Install it with `go`:
 
 ```bash
 go install github.com/skunkwerks/icy/cmd/icy@latest
+```
+
+Or build it from a checkout:
+
+```bash
+go build -o icy ./cmd/icy
 ```
 
 A [Docker image][docker] is also available.
