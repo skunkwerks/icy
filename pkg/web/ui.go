@@ -326,11 +326,12 @@ type homeRepo struct {
 	Name        string
 	Description string
 	Private     bool
+	Unlisted    bool
 	Updated     time.Time
 }
 
-// home renders the front page with every listed repository the caller can
-// read. Unlisted (hidden) repositories are never listed.
+// home renders the front page with every repository the caller can read
+// and proto.Visibility.Listed lets them see.
 func (ui *webUI) home(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	be := backend.FromContext(ctx)
@@ -347,7 +348,8 @@ func (ui *webUI) home(w http.ResponseWriter, r *http.Request) {
 		for _, repo := range repos {
 			// Names with a reserved segment have no web URL, see
 			// readableForWeb.
-			if repo.IsHidden() || utils.HasReservedSegment(repo.Name()) {
+			vis := proto.VisibilityOf(repo)
+			if !vis.Listed(user != nil) || utils.HasReservedSegment(repo.Name()) {
 				continue
 			}
 			if rr, _ := be.Readable(ctx, repo.Name(), user); rr == nil {
@@ -357,6 +359,7 @@ func (ui *webUI) home(w http.ResponseWriter, r *http.Request) {
 				Name:        repo.Name(),
 				Description: utils.Sanitize(repo.Description()),
 				Private:     repo.IsPrivate(),
+				Unlisted:    vis == proto.VisibilityUnlisted,
 				Updated:     repo.UpdatedAt(),
 			})
 		}

@@ -9,7 +9,7 @@
 <thead><tr><th>Repository</th><th class="wide">Description</th><th>Updated</th></tr></thead>
 <tbody>
 {{range .}}<tr>
-<td><a href="{{repoURL .Name}}">{{.Name}}</a>{{if .Private}} <span class="badge">private</span>{{end}}</td>
+<td><a href="{{repoURL .Name}}">{{.Name}}</a>{{if .Private}} <span class="badge">private</span>{{else if .Unlisted}} <span class="badge">unlisted</span>{{end}}</td>
 <td class="wide">{{.Description}}</td>
 <td class="nowrap">{{with .Updated}}{{if not .IsZero}}<time datetime="{{iso .}}">{{ago .}}</time>{{end}}{{end}}</td>
 </tr>

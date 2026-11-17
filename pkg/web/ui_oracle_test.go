@@ -123,12 +123,18 @@ func TestUIPrivateLooksMissingWhenNested(t *testing.T) {
 
 // TestUIFrontPageDoesNotListHidden checks the front page never mentions a
 // private or unlisted repository to someone who should not see it.
-func TestUIFrontPageDoesNotListHidden(t *testing.T) {
+func TestUIFrontPageListing(t *testing.T) {
 	is := is.New(t)
 	f := newUIFixture(t)
-	for _, c := range []*http.Cookie{nil, f.login(t, f.stranger)} {
-		body := f.get("/", c).Body.String()
-		is.True(!strings.Contains(body, "secret"))
-		is.True(!strings.Contains(body, "/hid"))
-	}
+
+	// Anonymous visitors see neither private nor unlisted repositories.
+	body := f.get("/", nil).Body.String()
+	is.True(!strings.Contains(body, "secret"))
+	is.True(!strings.Contains(body, "/hid"))
+
+	// A signed in stranger sees unlisted repositories, never private ones
+	// they cannot read.
+	body = f.get("/", f.login(t, f.stranger)).Body.String()
+	is.True(!strings.Contains(body, "secret"))
+	is.True(strings.Contains(body, "/hid"))
 }

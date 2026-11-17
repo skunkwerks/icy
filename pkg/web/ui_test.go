@@ -192,12 +192,25 @@ func TestUIHome(t *testing.T) {
 	is.True(!strings.Contains(body, `href="/hid"`))
 	is.True(!strings.Contains(body, "secret"))
 
-	// The owner also sees their private repository, but never the
-	// unlisted one.
+	// The owner also sees their private repository. Signed in callers see
+	// unlisted repositories too, marked as such, but anonymous visitors
+	// only reach them by URL.
 	body = f.get("/", f.login(t, f.owner)).Body.String()
 	is.True(strings.Contains(body, `href="/secret"`))
 	is.True(strings.Contains(body, "owner"))
-	is.True(!strings.Contains(body, `href="/hid"`))
+	is.True(strings.Contains(body, `href="/hid"`))
+	is.True(strings.Contains(body, `<span class="badge">unlisted</span>`))
+	body = f.get("/", f.login(t, f.stranger)).Body.String()
+	is.True(strings.Contains(body, `href="/hid"`))
+	is.True(!strings.Contains(body, "secret"))
+
+	// A private repository that is also hidden is still private, so the
+	// people who can read it see it listed. Nobody else does.
+	_, err := f.be.CreateRepository(f.ctx, "privhid", f.owner, proto.RepositoryOptions{Private: true, Hidden: true})
+	is.NoErr(err)
+	is.True(strings.Contains(f.get("/", f.login(t, f.owner)).Body.String(), `href="/privhid"`))
+	is.True(!strings.Contains(f.get("/", f.login(t, f.stranger)).Body.String(), "privhid"))
+	is.True(!strings.Contains(f.get("/", nil).Body.String(), "privhid"))
 
 	// go-get on the front page is not the front page.
 	is.Equal(f.get("/?go-get=1", nil).Code, http.StatusNotFound)
