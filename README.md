@@ -724,8 +724,6 @@ Flags:
 
 ## The Icy TUI
 
-<img src="https://stuff.charm.sh/icy/icy-demo-commit.png" width="750" alt="TUI example showing a diff">
-
 Icy TUI is mainly used to browse repos over SSH. You can also use it to
 browse local repositories with `icy browse` or running `icy` within a Git
 repository.
