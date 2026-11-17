@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -423,26 +424,60 @@ func cmdEnvfile(ts *testscript.TestScript, neg bool, args []string) {
 }
 
 func cmdNewWebhook(ts *testscript.TestScript, neg bool, args []string) {
-	type webhookSite struct {
-		UUID string `json:"uuid"`
-	}
-
 	if len(args) != 1 {
 		ts.Fatalf("usage: new-webhook <env-name>")
 	}
 
-	const whSite = "https://webhook.site"
-	req, err := http.NewRequest(http.MethodPost, whSite+"/token", nil) //nolint:noctx
-	check(ts, err, neg)
+	// webhook.site rate limits shared CI runners, so retry a few times and
+	// wait out the limit between attempts.
+	const (
+		whSite   = "https://webhook.site"
+		attempts = 5
+		backoff  = 40 * time.Second
+	)
+	var lastErr error
+	for i := range attempts {
+		if i > 0 {
+			ts.Logf("new-webhook: attempt %d failed: %v, retrying in %s", i, lastErr, backoff)
+			time.Sleep(backoff)
+		}
+		uuid, err := newWebhookSiteToken(whSite)
+		if err == nil {
+			ts.Setenv(args[0], whSite+"/"+uuid)
+			return
+		}
+		lastErr = err
+	}
+	check(ts, lastErr, neg)
+}
+
+// newWebhookSiteToken asks webhook.site for a new endpoint and returns its UUID.
+func newWebhookSiteToken(site string) (string, error) {
+	req, err := http.NewRequest(http.MethodPost, site+"/token", nil) //nolint:noctx
+	if err != nil {
+		return "", err //nolint:wrapcheck
+	}
+	req.Header.Set("Accept", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
-	check(ts, err, neg)
+	if err != nil {
+		return "", err //nolint:wrapcheck
+	}
+	defer resp.Body.Close() //nolint:errcheck
 
-	defer resp.Body.Close()
-	var site webhookSite
-	check(ts, json.NewDecoder(resp.Body).Decode(&site), neg)
-
-	ts.Setenv(args[0], whSite+"/"+site.UUID)
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("webhook.site returned %s", resp.Status)
+	}
+	var token struct {
+		UUID string `json:"uuid"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
+		return "", fmt.Errorf("decode webhook.site token: %w", err)
+	}
+	if token.UUID == "" {
+		return "", errors.New("webhook.site returned no uuid")
+	}
+	return token.UUID, nil
 }
 
 func cmdCurl(ts *testscript.TestScript, neg bool, args []string) {
