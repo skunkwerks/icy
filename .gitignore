@@ -6,4 +6,4 @@ dist
 data/
 completions/
 manpages/
-soft_serve_ed25519*
+icy_ed25519*

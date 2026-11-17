@@ -423,8 +423,8 @@ func DefaultConfig() *Config {
 			Enabled:                     true,
 			ListenAddr:                  ":23231",
 			PublicURL:                   "ssh://localhost:23231",
-			KeyPath:                     filepath.Join("ssh", "soft_serve_host_ed25519"),
-			ClientKeyPath:               filepath.Join("ssh", "soft_serve_client_ed25519"),
+			KeyPath:                     filepath.Join("ssh", "icy_host_ed25519"),
+			ClientKeyPath:               filepath.Join("ssh", "icy_client_ed25519"),
 			ClientStrictHostKeyChecking: StrictHostKeyCheckingAcceptNew,
 			MaxTimeout:                  0,
 			IdleTimeout:                 10 * 60, // 10 minutes
