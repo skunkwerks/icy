@@ -764,11 +764,28 @@ A repository has one of three visibilities.
 
 - `public` repositories are listed. Anyone the `anon-access` setting allows
   can read and clone them.
-- `unlisted` repositories are not listed anywhere. Anyone who knows the name
-  can still read them and clone them over HTTPS.
+- `unlisted` repositories are listed only for signed in users. Anyone who
+  knows the name can still read them and clone them over HTTPS.
 - `private` repositories can only be read by admins, the owner and
   collaborators. To everyone else a private repository looks exactly like one
   that does not exist.
+
+The web front page, `repo list` and the TUI all list repositories by the
+same rule. Signed in means a registered user: over ssh, a key that belongs
+to a user, and on the web, a session from `web login`.
+
+| Who | Public | Unlisted | Private |
+|---|---|---|---|
+| Anonymous, `allow-keyless` on | `anon-access`, listed | `anon-access` by name, not listed | nothing, looks missing |
+| Anonymous, `allow-keyless` off | nothing | nothing | nothing, looks missing |
+| Signed in user | read, listed | read, listed | nothing, looks missing |
+| Collaborator | their access, listed | their access, listed | their access, listed |
+| Owner or admin | admin, listed | admin, listed | admin, listed |
+
+`anon-access` is `read-only` by default. A collaborator never gets less than
+`anon-access` on a public repository. The owner is the user who created the
+repository. A private repository is listed for those who can read it even
+when it is also hidden.
 
 Visibility is stored in the `private` and `hidden` flags, so the `private` and
 `hidden` commands still work. `unlisted` is the same as hidden but not private.
