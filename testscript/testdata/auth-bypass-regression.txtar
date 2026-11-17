@@ -31,13 +31,13 @@
 
 [windows] dos2unix notauthorizederr.txt
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # Create a private repo as admin that only admin can access
-soft repo create admin-only-repo -p
+icy repo create admin-only-repo -p
 
 # TEST 1: Simulate the attack using attacksoft command
 ! attacksoft repo create attacker-created-repo
@@ -47,7 +47,7 @@ soft repo create admin-only-repo -p
 cmp stderr notauthorizederr.txt
 
 # TEST 3: Verify admin can still create repos (sanity check)
-soft repo create admin-created-repo
+icy repo create admin-created-repo
 
 # TEST 4: Verify attacker cannot delete admin's repo
 ! attacksoft repo delete admin-only-repo

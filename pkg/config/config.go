@@ -17,7 +17,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var binPath = "soft"
+var binPath = "icy"
 
 const (
 	// StrictHostKeyCheckingAcceptNew records an unknown host key on first

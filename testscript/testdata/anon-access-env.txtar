@@ -13,8 +13,8 @@ env SOFT_SERVE_INITIAL_ADMIN_KEYS=
 env SOFT_SERVE_ANON_ACCESS=admin-access
 env SOFT_SERVE_ALLOW_KEYLESS=true
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 ensureserverrunning SSH_PORT
 ensureserverrunning HTTP_PORT
 

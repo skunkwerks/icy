@@ -3,14 +3,14 @@
 # convert crlf to lf on windows
 [windows] dos2unix info.txt
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # create a repo & user1 with admin
-soft repo create repo1 -p
-soft user create user1 -k "$USER1_AUTHORIZED_KEY"
+icy repo create repo1 -p
+icy user create user1 -k "$USER1_AUTHORIZED_KEY"
 
 # setup repo
 git clone ssh://localhost:$SSH_PORT/repo1 repo1
@@ -22,16 +22,16 @@ git -C repo1 push origin HEAD
 git -C repo1 push origin HEAD --tags
 
 # admin can access it
-soft repo tree repo1
-soft repo blob repo1 README.md
-soft repo description repo1 'desc'
-soft repo project-name repo1 'proj'
-soft repo private repo1
-soft repo info repo1
+icy repo tree repo1
+icy repo blob repo1 README.md
+icy repo description repo1 'desc'
+icy repo project-name repo1 'proj'
+icy repo private repo1
+icy repo info repo1
 cmp stdout info.txt
 
 # verify no collab
-soft repo collab list repo1
+icy repo collab list repo1
 ! stdout .
 
 # regular user can't access it
@@ -65,10 +65,10 @@ stderr 'repository not found'
 stderr 'repository not found'
 
 # add user1 as collab
-! soft repo collab add repo1 user1 foobar
+! icy repo collab add repo1 user1 foobar
 stderr 'invalid access level'
-soft repo collab add repo1 user1 read-write
-soft repo collab list repo1
+icy repo collab add repo1 user1 read-write
+icy repo collab list repo1
 stdout user1
 usoft repo collab list repo1
 stdout user1

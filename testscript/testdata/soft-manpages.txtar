@@ -1,5 +1,5 @@
 # vi: set ft=conf
 
-# test `soft man` output
-exec soft man
+# test `icy man` output
+exec icy man
 stdout .

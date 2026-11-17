@@ -260,7 +260,7 @@ func TestValidateRejectsUnquotableDataPath(t *testing.T) {
 	}
 
 	cfg := DefaultConfig()
-	cfg.DataPath = t.TempDir() + "/Application Support/soft serve"
+	cfg.DataPath = t.TempDir() + "/Application Support/icy serve"
 	if err := cfg.Validate(); err != nil {
 		t.Errorf("Validate() rejected a data path with spaces: %v", err)
 	}

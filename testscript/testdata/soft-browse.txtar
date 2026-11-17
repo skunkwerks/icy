@@ -5,16 +5,16 @@
 # clone repo
 #git clone https://github.com/charmbracelet/wizard-tutorial.git wizard-tutorial
 
-# run soft browse
+# run icy browse
 # disable this temporarily
 #ttyin input.txt
-#exec soft browse ./wizard-tutorial
+#exec icy browse ./wizard-tutorial
 
-# cd and run soft
+# cd and run icy
 # disable this temporarily
 #cd wizard-tutorial
 #ttyin ../input.txt
-#exec soft
+#exec icy
 
 -- input.txt --
 jjkkdduu

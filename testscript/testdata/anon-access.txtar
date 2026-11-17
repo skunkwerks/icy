@@ -1,16 +1,16 @@
 # vi: set ft=conf
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # set settings
-soft settings allow-keyless true
-soft settings anon-access no-access
+icy settings allow-keyless true
+icy settings anon-access no-access
 
 # create a repo
-soft repo create repo1
+icy repo create repo1
 git clone ssh://localhost:$SSH_PORT/repo1 repo1
 mkfile ./repo1/README.md '# Hello\n\nwelcome'
 git -C repo1 add -A

@@ -120,7 +120,7 @@ func NewServer(ctx context.Context) (*Server, error) {
 // post-override settings grant unauthenticated (keyless) connections admin
 // access. This checks effective runtime state via the backend, not just the
 // new config-override fields, since the same risk exists whether the
-// dangerous combination came from config or was set via `ssh soft settings`
+// dangerous combination came from config or was set via `ssh icy settings`
 // on a previous run.
 func warnIfAnonAdminAccess(ctx context.Context, be *backend.Backend, logger *log.Logger) {
 	if !be.AllowKeyless(ctx) || be.AnonAccess(ctx) < access.AdminAccess {

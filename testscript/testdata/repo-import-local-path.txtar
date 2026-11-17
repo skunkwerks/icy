@@ -2,14 +2,14 @@
 
 [windows] skip 'uses a raw server filesystem path as the import remote'
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # create a private repo and a second user
-soft repo create secret -p
-soft user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy repo create secret -p
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
 
 # seed the private repo with content
 git clone ssh://localhost:$SSH_PORT/secret secret

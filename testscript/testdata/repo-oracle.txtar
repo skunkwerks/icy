@@ -3,13 +3,13 @@
 # A caller who cannot read a repository must get the same answer whether the
 # repository is private or does not exist, so names cannot be guessed.
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # a private repo with a branch and a tag
-soft repo create secret -p
+icy repo create secret -p
 git clone ssh://localhost:$SSH_PORT/secret secret
 mkfile ./secret/README.md '# secret'
 git -C secret add -A
@@ -177,7 +177,7 @@ cmp stderr want.txt
 ! stdout .
 
 # registered user without access
-soft user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
 ! usoft repo info secret
 stderr 'repository not found'
 ! stdout .
@@ -337,13 +337,13 @@ cmp stderr want.txt
 ! stdout .
 
 # nothing leaked through a write that silently succeeded
-soft repo hidden secret
+icy repo hidden secret
 stdout 'false'
-soft repo project-name secret
+icy repo project-name secret
 ! stdout 'new'
-soft repo description secret
+icy repo description secret
 ! stdout 'new'
-soft repo list
+icy repo list
 stdout 'secret'
 ! stdout 'other'
 ! stdout 'ghost'
@@ -358,18 +358,18 @@ cmp stderr want.txt
 ! stdout .
 
 # a server admin can still delete a database row whose directory is gone
-soft repo create gone
+icy repo create gone
 rm $DATA_PATH/repos/gone.git
-soft repo list
+icy repo list
 stdout 'gone'
-soft repo delete gone
-soft repo list
+icy repo delete gone
+icy repo list
 ! stdout 'gone'
-! soft repo delete gone
+! icy repo delete gone
 stderr 'repository not found'
 
 # a reader who cannot write is still told so, since existence is no secret
-soft repo collab add secret user1 read-only
+icy repo collab add secret user1 read-only
 usoft repo description secret
 ! usoft repo delete secret
 stderr 'unauthorized'
@@ -379,6 +379,6 @@ stderr 'unauthorized'
 stderr 'unauthorized'
 
 # stop the server; the last command must succeed so stderr is clean
-soft repo list
+icy repo list
 [windows] stopserver
 [windows] ! stderr .

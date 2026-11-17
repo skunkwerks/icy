@@ -51,12 +51,12 @@ func TestMain(m *testing.M) {
 	}
 	defer os.RemoveAll(tmp)
 
-	binPath = filepath.Join(tmp, "soft")
+	binPath = filepath.Join(tmp, "icy")
 	if runtime.GOOS == "windows" {
 		binPath += ".exe"
 	}
 
-	// Build the soft binary with -cover flag.
+	// Build the icy binary with -cover flag.
 	cmd := PrepareBuildCommand(binPath)
 	if err := cmd.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to build soft-serve binary: %s", err)
@@ -92,7 +92,7 @@ func TestScript(t *testing.T) {
 		UpdateScripts:       *update,
 		RequireExplicitExec: true,
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
-			"soft":                   cmdSoft("admin", admin1.Signer()),
+			"icy":                    cmdSoft("admin", admin1.Signer()),
 			"usoft":                  cmdSoft("user1", user1.Signer()),
 			"attacksoft":             cmdSoft("attacker", attackerSigner, attacker.Signer()),
 			"ksoft":                  cmdKeylessSoft,

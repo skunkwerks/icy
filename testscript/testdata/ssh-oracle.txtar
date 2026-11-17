@@ -5,13 +5,13 @@
 
 [windows] dos2unix notauthorizederr.txt invalidrepoerr.txt
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # a private repo with content
-soft repo create secret -p
+icy repo create secret -p
 git clone ssh://localhost:$SSH_PORT/secret secret
 mkfile ./secret/README.md '# secret'
 git -C secret add -A
@@ -57,7 +57,7 @@ grep 'Repositories' tui-ghost.txt
 ! stderr 'unauthorized'
 
 # registered user without access
-soft user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
 ! usoft git-upload-pack secret
 cmp stderr invalidrepoerr.txt
 ! usoft git-upload-pack ghost
@@ -87,7 +87,7 @@ stdout 'newname'
 ! stdout 'ghost'
 
 # a collaborator explicitly granted no access is treated like a stranger
-soft repo collab add secret user1 no-access
+icy repo collab add secret user1 no-access
 ! usoft git-upload-pack secret
 cmp stderr invalidrepoerr.txt
 ! usoft git-upload-pack ghost
@@ -96,7 +96,7 @@ cmp stderr invalidrepoerr.txt
 cmp stderr invalidrepoerr.txt
 ! usoft git-receive-pack secret
 cmp stderr invalidrepoerr.txt
-soft repo collab remove secret user1
+icy repo collab remove secret user1
 
 # a directory with no database row answers like any unreadable repository
 mkdir $DATA_PATH/repos/orphan.git
@@ -106,7 +106,7 @@ cmp stderr invalidrepoerr.txt
 cmp stderr invalidrepoerr.txt
 ! usoft git-lfs-authenticate orphan download
 cmp stderr invalidrepoerr.txt
-soft repo list
+icy repo list
 ! stdout 'orphan'
 
 # the TUI still opens the selector for the registered user
@@ -120,7 +120,7 @@ grep 'Repositories' tui-ghost2.txt
 ! grep 'unauthorized' tui-ghost2.txt
 
 # a reader is still told when they cannot write
-soft repo collab add secret user1 read-only
+icy repo collab add secret user1 read-only
 usoft git-lfs-authenticate secret download
 stdout '.*Bearer.*'
 ! usoft git-lfs-authenticate secret upload
@@ -129,7 +129,7 @@ cmp stderr notauthorizederr.txt
 cmp stderr notauthorizederr.txt
 
 # stop the server; the last command must succeed so stderr is clean
-soft repo list
+icy repo list
 [windows] stopserver
 [windows] ! stderr .
 

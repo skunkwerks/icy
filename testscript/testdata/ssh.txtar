@@ -2,57 +2,57 @@
 
 [windows] dos2unix argserr1.txt argserr2.txt argserr3.txt invalidrepoerr.txt notauthorizederr.txt
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # create a user
-soft user create foo --key "$USER1_AUTHORIZED_KEY"
+icy user create foo --key "$USER1_AUTHORIZED_KEY"
 
 # create a repo
-soft repo create repo1
-soft repo create repo1p -p
+icy repo create repo1
+icy repo create repo1p -p
 usoft repo create repo2
 usoft repo create repo2p -p
 
 # SSH Git commands as admin
-! soft git-upload-pack
+! icy git-upload-pack
 cmp stderr argserr1.txt
-! soft git-upload-pack foobar
+! icy git-upload-pack foobar
 cmp stderr invalidrepoerr.txt
-! soft git-upload-archive
+! icy git-upload-archive
 cmp stderr argserr1.txt
-! soft git-upload-archive foobar
+! icy git-upload-archive foobar
 cmp stderr invalidrepoerr.txt
-! soft git-receive-pack
+! icy git-receive-pack
 cmp stderr argserr1.txt
-! soft git-receive-pack foobar
+! icy git-receive-pack foobar
 stdout '.*0000 capabilities.*git.*' # git pack response
 stderr '.*something went wrong.*'
-! soft git-lfs-authenticate
+! icy git-lfs-authenticate
 cmp stderr argserr2.txt
-! soft git-lfs-authenticate foobar
+! icy git-lfs-authenticate foobar
 cmp stderr argserr3.txt
-! soft git-lfs-authenticate foobar download
+! icy git-lfs-authenticate foobar download
 cmp stderr invalidrepoerr.txt
-! soft git-lfs-authenticate foobar upload
+! icy git-lfs-authenticate foobar upload
 cmp stderr invalidrepoerr.txt
-soft git-lfs-authenticate repo1 download
+icy git-lfs-authenticate repo1 download
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-soft git-lfs-authenticate repo1 upload
+icy git-lfs-authenticate repo1 upload
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-soft git-lfs-authenticate repo1p download
+icy git-lfs-authenticate repo1p download
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-soft git-lfs-authenticate repo1p upload
+icy git-lfs-authenticate repo1p upload
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-soft git-lfs-authenticate repo2 download
+icy git-lfs-authenticate repo2 download
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-soft git-lfs-authenticate repo2 upload
+icy git-lfs-authenticate repo2 upload
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-soft git-lfs-authenticate repo2p download
+icy git-lfs-authenticate repo2p download
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
-soft git-lfs-authenticate repo2p upload
+icy git-lfs-authenticate repo2p upload
 stdout '.*header.*Bearer.*href.*expires_in.*expires_at.*'
 
 # SSH Git commands as user

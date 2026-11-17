@@ -1,12 +1,12 @@
 # vi: set ft=conf
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # create user
-soft user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
 
 # generate jwt token
 usoft token create 'test1'

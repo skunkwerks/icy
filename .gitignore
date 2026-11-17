@@ -1,5 +1,5 @@
-cmd/icy/soft
-./soft
+cmd/icy/icy
+./icy
 .ssh
 .repos
 dist

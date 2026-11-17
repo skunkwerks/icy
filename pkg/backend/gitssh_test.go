@@ -94,7 +94,7 @@ func TestGitSSHCommandEnv(t *testing.T) {
 // the other.
 func TestRemoteGitEnv(t *testing.T) {
 	cfg := config.DefaultConfig()
-	cfg.DataPath = "/srv/soft"
+	cfg.DataPath = "/srv/icy"
 	if err := cfg.Validate(); err != nil {
 		t.Fatal(err)
 	}

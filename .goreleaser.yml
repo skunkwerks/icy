@@ -8,7 +8,7 @@ includes:
 
 variables:
   main: "./cmd/icy"
-  binary_name: soft
+  binary_name: icy
   description: "A tasty, self-hostable Git server for the command line🍦"
   github_url: "https://github.com/charmbracelet/soft-serve"
   maintainer: "Ayman Bagabas <ayman@charm.sh>"

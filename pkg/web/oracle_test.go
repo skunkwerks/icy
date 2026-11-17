@@ -165,7 +165,7 @@ func TestReceivePackReaderIsForbidden(t *testing.T) {
 	is.True(err != nil)
 }
 
-// mintJWT signs a token for user the way `soft jwt` does.
+// mintJWT signs a token for user the way `icy jwt` does.
 func mintJWT(ctx context.Context, t *testing.T, user proto.User, audience ...string) string {
 	t.Helper()
 	is := is.New(t)
@@ -231,6 +231,6 @@ func TestBearerTokenDoesNotRevealPrivateRepositories(t *testing.T) {
 	is.Equal(f.do(http.MethodGet, fmt.Sprintf(path, "secret"), mint("secret")).Code, http.StatusOK)
 
 	// The audience is matched against the sanitized name, which is what
-	// `soft jwt` mints, so a ".git" suffix in the token does not match.
+	// `icy jwt` mints, so a ".git" suffix in the token does not match.
 	is.Equal(f.do(http.MethodGet, fmt.Sprintf(path, "secret"), mint("secret.git")).Code, http.StatusForbidden)
 }

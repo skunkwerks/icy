@@ -9,12 +9,12 @@
 
 env SOFT_SERVE_SSH_CLIENT_ALLOWED_HOSTS=127.0.0.1:1
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
-soft user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
 
 # an allowed host passes policy for a non-admin and fails only at the clone,
 # since nothing listens on loopback port 1
@@ -28,7 +28,7 @@ stderr 'remote must be a network URL'
 stderr 'remote host is not allowed'
 
 # a host that is not listed is refused for the admin too
-! soft repo import denied2 ssh://git@127.0.0.2:1/x.git
+! icy repo import denied2 ssh://git@127.0.0.2:1/x.git
 stderr 'remote host is not allowed'
 
 # scp-style syntax goes through the same policy
@@ -37,7 +37,7 @@ stderr 'remote host is not allowed'
 ! usoft repo import allowed2 '[git@127.0.0.1:1]:x.git'
 stderr 'import failed'
 
-soft repo list
+icy repo list
 ! stdout 'allowed'
 ! stdout 'denied'
 

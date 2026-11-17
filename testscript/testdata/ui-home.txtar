@@ -1,7 +1,7 @@
 # vi: set ft=conf
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
@@ -18,10 +18,10 @@ cp stdout about.txt
 grep 'Create a `.soft-serve` repository and add a `README.md` file' about.txt
 
 # add a new repo
-soft repo create .soft-serve -n 'Config' -d '"Test Soft Serve"'
-soft repo description .soft-serve
+icy repo create .soft-serve -n 'Config' -d '"Test Soft Serve"'
+icy repo description .soft-serve
 stdout 'Test Soft Serve'
-soft repo project-name .soft-serve
+icy repo project-name .soft-serve
 stdout 'Config'
 
 # clone repo

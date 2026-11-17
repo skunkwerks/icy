@@ -28,15 +28,15 @@
 #   collaborator
 # - Webhook deliveries cannot be read across repositories
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # create regular, non-admin users
-soft user create user1 --key "$USER1_AUTHORIZED_KEY"
-soft user create boss --key "$ATTACKER_AUTHORIZED_KEY"
-soft user info user1
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy user create boss --key "$ATTACKER_AUTHORIZED_KEY"
+icy user info user1
 stdout 'Admin: false'
 
 # The attacker creates repositories named after the arguments they intend to
@@ -64,18 +64,18 @@ usoft repo create admin
 ! usoft settings allow-keyless true
 
 # a placeholder to reset stderr
-soft help
+icy help
 
 # The attacker is still not an admin, and settings are unchanged.
-soft user info user1
+icy user info user1
 stdout 'Admin: false'
-soft settings anon-access
+icy settings anon-access
 stdout 'read-only.*'
 
 # Collaborator grants are bounded by the caller's own access level.
-soft repo create shared
-soft repo collab add shared user1 read-write
-soft repo collab add shared boss admin-access
+icy repo create shared
+icy repo collab add shared user1 read-write
+icy repo collab add shared boss admin-access
 
 # user1 is read-write on "shared" and must not be able to grant admin-access.
 ! usoft repo collab add shared user1 admin-access
@@ -85,30 +85,30 @@ soft repo collab add shared boss admin-access
 ! usoft repo collab add shared boss read-only
 
 # a placeholder to reset stderr
-soft help
+icy help
 
 # boss is still an admin-access collaborator, and user1 did not escalate.
-soft repo collab list shared
+icy repo collab list shared
 stdout 'boss'
 
 # Granting at or below the caller's own level still works.
-soft user create peer
+icy user create peer
 usoft repo collab add shared peer read-only
-soft repo collab list shared
+icy repo collab list shared
 stdout 'peer'
 
 # Webhook deliveries must be scoped to the named repository. The attacker has
 # admin access to their own repo "user1", which must not expose the webhook
 # deliveries of "shared" (these include full request URLs, headers, bodies).
 new-webhook WH_SHARED
-soft repo webhook create shared $WH_SHARED -e push
-soft repo webhook list shared
+icy repo webhook create shared $WH_SHARED -e push
+icy repo webhook list shared
 stdout '1.*'
 ! usoft repo webhook deliveries list user1 1
 ! usoft repo webhook deliveries get user1 1 00000000-0000-0000-0000-000000000000
 
 # a placeholder to reset stderr
-soft help
+icy help
 
 # stop the server
 [windows] stopserver

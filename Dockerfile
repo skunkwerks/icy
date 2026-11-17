@@ -22,8 +22,8 @@ EXPOSE 23233/tcp
 EXPOSE 9418/tcp
 
 # Set the default command
-ENTRYPOINT [ "/usr/local/bin/soft", "serve" ]
+ENTRYPOINT [ "/usr/local/bin/icy", "serve" ]
 
 RUN apk update && apk add --update git bash openssh && rm -rf /var/cache/apk/*
 
-COPY soft /usr/local/bin/soft
+COPY icy /usr/local/bin/icy

@@ -10,7 +10,7 @@ User=soft-serve
 Group=soft-serve
 Restart=always
 RestartSec=1
-ExecStart=/usr/bin/soft serve
+ExecStart=/usr/bin/icy serve
 Environment=SOFT_SERVE_DATA_PATH=/var/lib/soft-serve
 EnvironmentFile=-/etc/soft-serve.conf
 WorkingDirectory=/var/lib/soft-serve

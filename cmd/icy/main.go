@@ -37,7 +37,7 @@ var (
 	CommitDate = ""
 
 	rootCmd = &cobra.Command{
-		Use:          "soft",
+		Use:          "icy",
 		Short:        "A self-hostable Git server for the command line",
 		Long:         "Soft Serve is a self-hostable Git server for the command line.",
 		SilenceUsage: true,
@@ -130,7 +130,7 @@ func main() {
 	}
 
 	// Set the max number of processes to the number of CPUs
-	// This is useful when running soft serve in a container
+	// This is useful when running icy serve in a container
 	if _, err := maxprocs.Set(opts...); err != nil {
 		log.Warn("couldn't set automaxprocs", "error", err)
 	}

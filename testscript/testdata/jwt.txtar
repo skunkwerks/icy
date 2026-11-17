@@ -1,17 +1,17 @@
 # vi: set ft=conf
 
-# start soft serve
-exec soft serve &
+# start icy serve
+exec icy serve &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
 # create user
-soft user create user1 --key "$USER1_AUTHORIZED_KEY"
+icy user create user1 --key "$USER1_AUTHORIZED_KEY"
 
 # generate jwt token
-soft jwt
+icy jwt
 stdout '.*\..*\..*'
-soft jwt repo
+icy jwt repo
 stdout '.*\..*\..*'
 usoft jwt
 stdout '.*\..*\..*'
@@ -22,7 +22,7 @@ stdout '.*\..*\..*'
 # repo get the same answer, so the token cannot be used to probe names
 [windows] stopserver
 [windows] skip 'curl makes github actions hang'
-soft repo create secret -p
+icy repo create secret -p
 usoft jwt secret
 cp stdout secretjwt
 envfile SECRETJWT=secretjwt

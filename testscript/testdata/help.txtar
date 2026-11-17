@@ -1,12 +1,12 @@
 # vi: set ft=conf
 [windows] dos2unix help.txt
 
-# start soft serve
-exec soft serve --sync-hooks &
+# start icy serve
+exec icy serve --sync-hooks &
 # wait for SSH server to start
 ensureserverrunning SSH_PORT
 
-soft --help
+icy --help
 cmpenv stdout help.txt
 
 # stop the server
