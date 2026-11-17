@@ -23,7 +23,7 @@ func TestUILoginIsSingleUse(t *testing.T) {
 
 	token, err := f.be.CreateWebLogin(f.ctx, f.owner, "/secret", time.Minute)
 	is.NoErr(err)
-	link := "/~/login?token=" + url.QueryEscape(token)
+	link := "/-/login?token=" + url.QueryEscape(token)
 
 	w := f.get(link, nil)
 	is.Equal(w.Code, http.StatusSeeOther)
@@ -46,14 +46,14 @@ func TestUILoginIsSingleUse(t *testing.T) {
 	is.True(sessionCookieOf(f.get(link, nil)) == nil)
 
 	// Unknown and empty tokens get the same answer as a used one.
-	is.Equal(uiAnswerOf(f.get("/~/login?token=icy_login_nope", nil)), used)
-	is.Equal(uiAnswerOf(f.get("/~/login", nil)), used)
+	is.Equal(uiAnswerOf(f.get("/-/login?token=icy_login_nope", nil)), used)
+	is.Equal(uiAnswerOf(f.get("/-/login", nil)), used)
 
 	// An expired token gets it too.
 	expired, err := f.be.CreateWebLogin(f.ctx, f.owner, "/", time.Millisecond)
 	is.NoErr(err)
 	time.Sleep(5 * time.Millisecond)
-	is.Equal(uiAnswerOf(f.get("/~/login?token="+url.QueryEscape(expired), nil)), used)
+	is.Equal(uiAnswerOf(f.get("/-/login?token="+url.QueryEscape(expired), nil)), used)
 
 	// Only GET signs in.
 	is.Equal(f.do(http.MethodPost, link, nil).Code, http.StatusMethodNotAllowed)
@@ -68,7 +68,7 @@ func TestUILoginSecureCookie(t *testing.T) {
 
 	token, err := f.be.CreateWebLogin(f.ctx, f.owner, "/", time.Minute)
 	is.NoErr(err)
-	c := sessionCookieOf(f.get("/~/login?token="+url.QueryEscape(token), nil))
+	c := sessionCookieOf(f.get("/-/login?token="+url.QueryEscape(token), nil))
 	is.True(c != nil)
 	is.True(c.Secure)
 }
@@ -82,14 +82,14 @@ func TestUILogout(t *testing.T) {
 	is.Equal(f.get("/secret", c).Code, http.StatusOK)
 
 	// A cross-site form cannot sign the user out.
-	w := f.do(http.MethodPost, "/~/logout", c, "Origin", "https://evil.example")
+	w := f.do(http.MethodPost, "/-/logout", c, "Origin", "https://evil.example")
 	is.Equal(w.Code, http.StatusForbidden)
 	is.Equal(f.get("/secret", c).Code, http.StatusOK)
 
 	// Signing out needs POST.
-	is.Equal(f.get("/~/logout", c).Code, http.StatusMethodNotAllowed)
+	is.Equal(f.get("/-/logout", c).Code, http.StatusMethodNotAllowed)
 
-	w = f.do(http.MethodPost, "/~/logout", c, "Origin", "http://localhost:23232")
+	w = f.do(http.MethodPost, "/-/logout", c, "Origin", "http://localhost:23232")
 	is.Equal(w.Code, http.StatusSeeOther)
 	cleared := sessionCookieOf(w)
 	is.True(cleared != nil)
@@ -180,7 +180,7 @@ func TestCleanPath(t *testing.T) {
 
 func TestLogURLRedactsToken(t *testing.T) {
 	is := is.New(t)
-	u, err := url.Parse("/~/login?token=icy_login_secret")
+	u, err := url.Parse("/-/login?token=icy_login_secret")
 	is.NoErr(err)
 	is.True(!strings.Contains(logURL(u), "icy_login_secret"))
 	u, err = url.Parse("/repo.git/info/refs?service=git-upload-pack")

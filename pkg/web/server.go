@@ -20,21 +20,12 @@ func NewRouter(ctx context.Context) http.Handler {
 	// Health routes
 	HealthController(ctx, router)
 
-	// Web UI routes that must come before the git routes: the front page
-	// and anything with a "~" path segment, which no repository name has.
-	var ui *webUI
-	if cfg.Web.Enabled {
-		ui = newWebUI()
-		ui.registerFront(router)
-	}
-
 	// Git routes
 	GitController(ctx, router)
 
-	// The repository summary takes whatever GET the git and go-get routes
-	// leave.
-	if ui != nil {
-		ui.registerSummary(router)
+	// The web UI takes what the git, LFS and go-get routes leave.
+	if cfg.Web.Enabled {
+		newWebUI().register(router)
 	}
 
 	router.PathPrefix("/").HandlerFunc(renderNotFound)

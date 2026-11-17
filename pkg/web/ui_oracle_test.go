@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -34,25 +35,31 @@ func uiOraclePaths(head string) []string {
 		"/%s",
 		"/%s/",
 		"/%s.git",
-		"/%s/~",
-		"/%s/~/",
-		"/%s/~/tree",
-		"/%s/~/tree/docs",
-		"/%s/~/tree?h=main",
-		"/%s/~/tree?h=v1",
-		"/%s/~/blob/main.go",
-		"/%s/~/blob/main.go?h=" + head,
-		"/%s/~/raw/main.go",
-		"/%s/~/raw/bin.dat",
-		"/%s/~/log",
-		"/%s/~/log?page=2",
-		"/%s/~/commit/" + head,
-		"/%s/~/commit/" + head[:8],
-		"/%s/~/refs",
-		"/%s/~/nope",
-		"/%s/sub/~/tree",
+		"/%s/tree",
+		"/%s/TREE",
+		"/%s/tree/docs",
+		"/%s/tree/log",
+		"/%s/blob/log/tree.txt",
+		"/%s/tree?h=main",
+		"/%s/tree?h=v1",
+		"/%s/blob/main.go",
+		"/%s/blob/main.go?h=" + head,
+		"/%s/raw/main.go",
+		"/%s/raw/bin.dat",
+		"/%s/log",
+		"/%s/log?page=2",
+		"/%s/commit/" + head,
+		"/%s/commit/" + head[:8],
+		"/%s/refs",
+		"/%s/nope",
+		"/%s/sub/tree",
+		"/%s/tree/tree/x",
+		"/%s/-/login",
 	}
 }
+
+// ownerSkips are oracle paths that do not exist even for the owner.
+var ownerSkips = []string{"nope", "/sub/", "page=2", "tree/tree/x", "/-/"}
 
 // TestUIPrivateLooksMissing checks that, for every page and every kind of
 // caller who cannot read it, a private repository gets byte-for-byte the
@@ -88,7 +95,7 @@ func TestUIPrivateLooksMissing(t *testing.T) {
 	// The same pages are there for the owner, so the paths above are real.
 	owner := f.login(t, f.owner)
 	for _, p := range uiOraclePaths(f.head) {
-		if strings.Contains(p, "nope") || strings.Contains(p, "/sub/") || strings.Contains(p, "page=2") {
+		if slices.ContainsFunc(ownerSkips, func(s string) bool { return strings.Contains(p, s) }) {
 			continue
 		}
 		if got := f.get(fmt.Sprintf(p, "secret"), owner).Code; got != http.StatusOK {
@@ -106,7 +113,7 @@ func TestUIPrivateLooksMissingWhenNested(t *testing.T) {
 	_, err := f.be.CreateRepository(ownerCtx, "org/private", f.owner, privateOpts())
 	is.NoErr(err)
 
-	for _, p := range []string{"/org/%s", "/org/%s/~/tree", "/org/%s/~/refs"} {
+	for _, p := range []string{"/org/%s", "/org/%s/tree", "/org/%s/refs", "/org/%s/tree/tree/x", "/org/%s/Log"} {
 		private := uiAnswerOf(f.get(fmt.Sprintf(p, "private"), nil))
 		missing := uiAnswerOf(f.get(fmt.Sprintf(p, "missing"), nil))
 		is.Equal(private, missing)

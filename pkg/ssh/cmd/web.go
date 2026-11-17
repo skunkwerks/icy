@@ -42,7 +42,9 @@ the link opens that repository after signing in.`,
 			// checking here would tell the caller which names exist.
 			next := "/"
 			if len(args) == 1 {
-				if name := utils.SanitizeRepo(args[0]); name != "" && utils.ValidateRepo(name) == nil {
+				// A name with a reserved segment has no web URL, so it
+				// lands on the front page instead.
+				if name := utils.SanitizeRepo(args[0]); name != "" && utils.ValidateNewRepo(name) == nil {
 					next = "/" + (&url.URL{Path: name}).EscapedPath()
 				}
 			}
@@ -53,7 +55,7 @@ the link opens that repository after signing in.`,
 			}
 
 			cmd.PrintErrln("This link signs you in once and expires in 5 minutes:")
-			cmd.Println(cfg.HTTP.PublicURL + "/~/login?token=" + url.QueryEscape(token))
+			cmd.Println(cfg.HTTP.PublicURL + "/-/login?token=" + url.QueryEscape(token))
 			return nil
 		},
 	})

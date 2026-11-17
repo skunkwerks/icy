@@ -21,13 +21,14 @@ import (
 // Web UI sessions.
 //
 // `ssh host web login` mints a single-use sign-in token (see
-// backend.CreateWebLogin). GET /~/login?token=T redeems it and sets a
+// backend.CreateWebLogin). GET /-/login?token=T redeems it and sets a
 // session cookie holding a JWT signed with the server's ed25519 key, the
 // same key and code that `icy jwt` uses. The cookie is the only credential
 // the web UI reads.
 //
-// The JWT audience is "~web". "~" cannot appear in a repository name, so a
-// session token never passes the audience check of a git bearer token, and
+// The JWT audience is "~web". It is not a URL. utils.ValidateRepo rejects
+// "~" in every repository name, old or new, so a session token never
+// passes the audience check of a git bearer token, and
 // a git bearer token, whose audience is a repository name, never passes as
 // a session.
 //

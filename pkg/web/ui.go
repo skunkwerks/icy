@@ -26,28 +26,34 @@ import (
 
 // The web UI is a read-only, server-rendered repository browser.
 //
-// Routes. "~" can never appear in a repository name (see
-// utils.ValidateRepo), so a "~" path segment always marks where the
-// repository name ends and cannot collide with a git, LFS or go-get path:
+// Routes. The first path segment that is one of utils.ReservedRepoSegments
+// ends the repository name, in any letter case. No new repository may
+// contain a reserved segment, so the split is decided by the path alone and
+// never by which repositories exist:
 //
-//	GET  /                              front page: server info and listed repos
-//	GET  /~/style.css                   stylesheet
-//	GET  /~/login?token=T               swap a sign-in token for a session cookie
-//	POST /~/logout                      end the session
-//	GET  /{repo}                        summary, README and clone URLs
-//	GET  /{repo}/~/tree/{path}?h=REV    directory listing
-//	GET  /{repo}/~/blob/{path}?h=REV    file with syntax highlighting
-//	GET  /{repo}/~/raw/{path}?h=REV     file contents as they are
-//	GET  /{repo}/~/log?h=REV&page=N     commit log
-//	GET  /{repo}/~/commit/{id}          one commit with its diff
-//	GET  /{repo}/~/refs                 branches and tags
+//	GET  /                            front page: server info and listed repos
+//	GET  /-/style.css                 stylesheet
+//	GET  /-/login?token=T             swap a sign-in token for a session cookie
+//	POST /-/logout                    end the session
+//	GET  /{repo}                      summary, README and clone URLs
+//	GET  /{repo}/tree/{path}?h=REV    directory listing
+//	GET  /{repo}/blob/{path}?h=REV    file with syntax highlighting
+//	GET  /{repo}/raw/{path}?h=REV     file contents as they are
+//	GET  /{repo}/log?h=REV&page=N     commit log
+//	GET  /{repo}/commit/{id}          one commit with its diff
+//	GET  /{repo}/refs                 branches and tags
 //
-// REV is a branch, a tag or a commit id, and defaults to HEAD. The summary
-// route is registered after the git routes, so /{repo}/info/refs and friends
-// keep their meaning, and it skips ?go-get=1 requests.
+// REV is a branch, a tag or a commit id, and defaults to HEAD.
+//
+// The web UI is registered after the git, LFS and go-get routes. A path
+// shaped like a git request, such as /{repo}/info/refs, stays with git, so
+// a repository created before its name was reserved, such as docs/log, can
+// still be cloned with or without ".git". The cost is that a file whose
+// path ends like a git request (HEAD, info/refs, objects/info/packs, ...)
+// cannot be shown in the tree, blob or raw views.
 
-// uiSep is the path segment that ends a repository name in web UI routes.
-const uiSep = "~"
+// serverSegment is the reserved segment that holds the server's own pages.
+const serverSegment = "-"
 
 //go:embed ui
 var uiFS embed.FS
@@ -90,37 +96,33 @@ func isRead(r *http.Request) bool {
 	return r.Method == http.MethodGet || r.Method == http.MethodHead
 }
 
-// registerFront registers the routes that must win over the git routes:
-// the front page and every path with a "~" segment.
-func (ui *webUI) registerFront(r *mux.Router) {
+// register adds the web UI as the last route before the final not-found
+// one. It takes every GET or HEAD that is not a go-get request, and any
+// method on a path with a reserved segment, so a POST to a web page gets
+// the web UI's answer.
+func (ui *webUI) register(r *mux.Router) {
 	r.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return req.URL.Path == "/" && isRead(req) && !isGoGet(req)
-	}).Handler(ui)
-	r.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		_, _, ok := splitUIPath(req.URL.Path)
-		return ok
-	}).Handler(ui)
-}
-
-// registerSummary registers the repository summary route. It goes after
-// the git and go-get routes so it only sees what they leave.
-func (ui *webUI) registerSummary(r *mux.Router) {
-	r.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return isRead(req) && !isGoGet(req)
+		if isGoGet(req) {
+			return false
+		}
+		_, _, _, reserved := splitUIPath(req.URL.Path)
+		return isRead(req) || reserved
 	}).Handler(ui)
 }
 
-// splitUIPath splits a request path at its first "~" segment into the
-// repository name before it and the segments after it. ok is false when
-// there is no "~" segment.
-func splitUIPath(p string) (repo string, sub []string, ok bool) {
-	segs := strings.Split(strings.Trim(p, "/"), "/")
+// splitUIPath splits a request path at its first reserved segment into the
+// repository name before it, the page the segment names, and the rest of
+// the path. ok is false when there is no reserved segment, and the whole
+// path is then the repository name.
+func splitUIPath(p string) (repo, page, rest string, ok bool) {
+	trimmed := strings.Trim(p, "/")
+	segs := strings.Split(trimmed, "/")
 	for i, s := range segs {
-		if s == uiSep {
-			return strings.Join(segs[:i], "/"), segs[i+1:], true
+		if word, reserved := utils.ReservedSegment(s); reserved {
+			return strings.Join(segs[:i], "/"), word, strings.Join(segs[i+1:], "/"), true
 		}
 	}
-	return strings.Trim(p, "/"), nil, false
+	return trimmed, "", "", false
 }
 
 // ServeHTTP implements http.Handler.
@@ -130,9 +132,9 @@ func (ui *webUI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := ui.session(r)
 	r = r.WithContext(proto.WithUserContext(r.Context(), user))
 
-	name, sub, hasSep := splitUIPath(r.URL.Path)
+	name, page, rest, _ := splitUIPath(r.URL.Path)
 	if name == "" {
-		ui.serveGlobal(w, r, sub, hasSep)
+		ui.serveGlobal(w, r, page, rest)
 		return
 	}
 
@@ -149,12 +151,6 @@ func (ui *webUI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ui.renderNotFound(w, r)
 		return
 	}
-
-	page := ""
-	if len(sub) > 0 {
-		page, sub = sub[0], sub[1:]
-	}
-	rest := strings.Join(sub, "/")
 
 	rc := &repoCtx{ui: ui, w: w, r: r, repo: repo, rev: r.URL.Query().Get("h")}
 	switch page {
@@ -177,14 +173,18 @@ func (ui *webUI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// serveGlobal serves the pages that belong to no repository.
-func (ui *webUI) serveGlobal(w http.ResponseWriter, r *http.Request, sub []string, hasSep bool) {
-	if !hasSep {
+// serveGlobal serves the pages that belong to no repository: the front
+// page at / and the server pages under /-/.
+func (ui *webUI) serveGlobal(w http.ResponseWriter, r *http.Request, segment, page string) {
+	switch {
+	case segment == "" && isRead(r):
 		ui.home(w, r)
+		return
+	case segment != serverSegment:
+		ui.renderNotFound(w, r)
 		return
 	}
 
-	page := strings.Join(sub, "/")
 	switch {
 	case page == "style.css" && isRead(r):
 		ui.style(w, r)
@@ -204,10 +204,14 @@ func (ui *webUI) serveGlobal(w http.ResponseWriter, r *http.Request, sub []strin
 // refused when the server does not allow keyless access, the same as for
 // git over HTTP. The result is nil for a missing repository and for one the
 // caller may not read alike.
+//
+// A name with a reserved segment is refused before any lookup. The URL
+// parser never produces one, and an existing repository created before its
+// name was reserved has no web URL that would not mean another page.
 func readableForWeb(ctx context.Context, name string) proto.Repository {
 	be := backend.FromContext(ctx)
 	user := proto.UserFromContext(ctx)
-	if user == nil && !be.AllowKeyless(ctx) {
+	if utils.HasReservedSegment(name) || (user == nil && !be.AllowKeyless(ctx)) {
 		return nil
 	}
 	repo, _ := be.Readable(ctx, name, user)
@@ -341,7 +345,9 @@ func (ui *webUI) home(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		for _, repo := range repos {
-			if repo.IsHidden() {
+			// Names with a reserved segment have no web URL, see
+			// readableForWeb.
+			if repo.IsHidden() || utils.HasReservedSegment(repo.Name()) {
 				continue
 			}
 			if rr, _ := be.Readable(ctx, repo.Name(), user); rr == nil {
@@ -391,7 +397,7 @@ func repoURL(name string) string {
 // pageURL is a web UI page of a repository. rev is added as ?h= unless
 // empty.
 func pageURL(name, page, p, rev string) string {
-	u := repoURL(name) + "/" + uiSep + "/" + page
+	u := repoURL(name) + "/" + page
 	if p != "" {
 		u += "/" + escapePath(p)
 	}

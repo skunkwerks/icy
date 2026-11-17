@@ -55,11 +55,11 @@ curl http://localhost:$HTTP_PORT/pub
 stdout '<h1>Pub readme</h1>'
 stdout 'git clone http://localhost:[0-9]+/pub.git'
 stdout 'git clone ssh://localhost:[0-9]+/pub.git'
-curl http://localhost:$HTTP_PORT/pub/~/tree
+curl http://localhost:$HTTP_PORT/pub/tree
 stdout 'README.md'
-curl http://localhost:$HTTP_PORT/pub/~/raw/README.md
+curl http://localhost:$HTTP_PORT/pub/raw/README.md
 cmp stdout pub/README.md
-curl http://localhost:$HTTP_PORT/pub/~/log
+curl http://localhost:$HTTP_PORT/pub/log
 stdout 'first'
 
 # the unlisted repository is not listed, but works by URL, including an
@@ -76,14 +76,36 @@ stdout '404 Not Found'
 cp stdout missing.txt
 curl http://localhost:$HTTP_PORT/ghost
 cmp stdout missing.txt
-curl http://localhost:$HTTP_PORT/secret/~/raw/README.md
+curl http://localhost:$HTTP_PORT/secret/raw/README.md
 cmp stdout missing.txt
-curl http://localhost:$HTTP_PORT/ghost/~/raw/README.md
+curl http://localhost:$HTTP_PORT/ghost/raw/README.md
 cmp stdout missing.txt
-curl http://localhost:$HTTP_PORT/secret/~/log
+curl http://localhost:$HTTP_PORT/secret/log
 cmp stdout missing.txt
-curl http://localhost:$HTTP_PORT/ghost/~/log
+curl http://localhost:$HTTP_PORT/ghost/log
 cmp stdout missing.txt
+
+# page words are reserved in repository names, in any case, and a
+# path through one is never a repository
+! icy repo create org/tree/x
+stderr 'reserved'
+! icy repo create docs/Log
+stderr 'reserved'
+! icy repo import org/refs https://example.com/x.git
+stderr 'reserved'
+! icy repo rename pub pub/log
+stderr 'reserved'
+! git -C pub push ssh://localhost:$SSH_PORT/team/blob HEAD
+stderr 'reserved'
+! uicy repo create org/tree/x
+stderr 'reserved'
+icy repo create org/logs
+curl http://localhost:$HTTP_PORT/org/tree/tree/x
+cmp stdout missing.txt
+curl http://localhost:$HTTP_PORT/org/logs
+stdout 'This repository is empty'
+curl http://localhost:$HTTP_PORT/org/logs/REFS
+stdout 'No branches'
 
 # an unregistered key cannot get a sign-in link
 ! uicy web login
@@ -91,7 +113,7 @@ cmp stdout missing.txt
 
 # sign in with a link minted over ssh; it lands on the repository
 icy web login secret
-stdout '^http://localhost:[0-9]+/~/login\?token=icy_login_'
+stdout '^http://localhost:[0-9]+/-/login\?token=icy_login_'
 stderr 'expires in 5 minutes'
 cp stdout login.txt
 envfile LOGIN=login.txt
@@ -108,7 +130,7 @@ curl --jar other http://localhost:$HTTP_PORT/secret
 cmp stdout missing.txt
 
 # signing out ends the session
-curl --jar admin -X POST http://localhost:$HTTP_PORT/~/logout
+curl --jar admin -X POST http://localhost:$HTTP_PORT/-/logout
 ! stdout 'Sign out'
 curl --jar admin http://localhost:$HTTP_PORT/secret
 ! stdout 'Secret readme'

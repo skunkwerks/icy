@@ -6,12 +6,12 @@
 <meta name="color-scheme" content="light dark">
 <meta name="referrer" content="no-referrer">
 <title>{{with .Title}}{{.}} - {{end}}{{with .Repo}}{{.Name}} - {{end}}{{.Site.Name}}</title>
-<link rel="stylesheet" href="/~/style.css?v={{.Site.CSSVersion}}">
+<link rel="stylesheet" href="/-/style.css?v={{.Site.CSSVersion}}">
 </head>
 <body>
 <header class="top">
 <nav class="crumbs"><a class="site" href="/">{{.Site.Name}}</a>{{with .Repo}} <span class="sep">/</span> <a href="{{repoURL .Name}}">{{.Name}}</a>{{if ne .Visibility "public"}} <span class="badge">{{.Visibility}}</span>{{end}}{{if .Mirror}} <span class="badge">mirror</span>{{end}}{{end}}</nav>
-<div class="who">{{if .User}}<span>{{.User}}</span> <form method="post" action="/~/logout"><button type="submit">Sign out</button></form>{{end}}</div>
+<div class="who">{{if .User}}<span>{{.User}}</span> <form method="post" action="/-/logout"><button type="submit">Sign out</button></form>{{end}}</div>
 </header>
 {{with .Repo}}
 <nav class="tabs">
