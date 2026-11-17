@@ -12,7 +12,7 @@ import (
 	"github.com/skunkwerks/icy/pkg/store"
 )
 
-// Backend is the Soft Serve backend that handles users, repositories, and
+// Backend is the Icy backend that handles users, repositories, and
 // server settings management and operations.
 type Backend struct {
 	ctx    context.Context
@@ -28,7 +28,7 @@ type Backend struct {
 	importGate func() string
 }
 
-// New returns a new Soft Serve backend.
+// New returns a new Icy backend.
 func New(ctx context.Context, cfg *config.Config, db *db.DB, st store.Store) *Backend {
 	logger := log.FromContext(ctx).WithPrefix("backend")
 	b := &Backend{

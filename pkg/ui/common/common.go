@@ -73,7 +73,7 @@ func (c *Common) Config() *config.Config {
 	return config.FromContext(c.ctx)
 }
 
-// Backend returns the Soft Serve backend.
+// Backend returns the Icy backend.
 func (c *Common) Backend() *backend.Backend {
 	return backend.FromContext(c.ctx)
 }

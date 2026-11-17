@@ -26,7 +26,7 @@ var createTables = Migration{
 		insert := "INSERT "
 
 		// Alter old tables (if exist)
-		// This is to support prior versions of Soft Serve v0.6
+		// This is to support prior versions of Icy v0.6
 		switch tx.DriverName() {
 		case "sqlite3", "sqlite":
 			insert += "OR IGNORE "

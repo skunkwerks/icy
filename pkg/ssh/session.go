@@ -30,7 +30,7 @@ var tuiSessionDuration = promauto.NewCounterVec(prometheus.CounterOpts{
 	Help:      "The total time spent in TUI sessions",
 }, []string{"repo", "term"})
 
-// SessionHandler is the soft-serve bubbletea ssh session handler.
+// SessionHandler is the icy bubbletea ssh session handler.
 // This middleware must be run after the ContextMiddleware.
 func SessionHandler(s ssh.Session) *tea.Program {
 	pty, _, active := s.Pty()

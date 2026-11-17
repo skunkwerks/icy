@@ -124,7 +124,7 @@ func TestScript(t *testing.T) {
 			httpListen := fmt.Sprintf("localhost:%d", httpPort)
 			statsPort := test.RandomPort()
 			statsListen := fmt.Sprintf("localhost:%d", statsPort)
-			serverName := "Test Soft Serve"
+			serverName := "Test Icy"
 
 			e.Setenv("DATA_PATH", data)
 			e.Setenv("SSH_PORT", fmt.Sprintf("%d", sshPort))
@@ -144,7 +144,7 @@ func TestScript(t *testing.T) {
 			// This will disable the default lipgloss renderer colors
 			e.Setenv("ICY_NO_COLOR", "1")
 
-			// Soft Serve debug environment variables
+			// Icy debug environment variables
 			for _, env := range []string{
 				"ICY_DEBUG",
 				"ICY_VERBOSE",

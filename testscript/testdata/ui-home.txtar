@@ -8,7 +8,7 @@ ensureserverrunning SSH_PORT
 # test repositories tab
 ui '"    q"'
 cp stdout home.txt
-grep 'Test Soft Serve' home.txt
+grep 'Test Icy' home.txt
 grep '• Repositories' home.txt
 grep 'No items' home.txt
 
@@ -18,9 +18,9 @@ cp stdout about.txt
 grep 'Create a `.icy` repository and add a `README.md` file' about.txt
 
 # add a new repo
-icy repo create .icy -n 'Config' -d '"Test Soft Serve"'
+icy repo create .icy -n 'Config' -d '"Test Icy"'
 icy repo description .icy
-stdout 'Test Soft Serve'
+stdout 'Test Icy'
 icy repo project-name .icy
 stdout 'Config'
 
@@ -28,7 +28,7 @@ stdout 'Config'
 git clone ssh://localhost:$SSH_PORT/.icy config
 
 # create readme file
-mkfile ./config/README.md '# Hello World\nTest Soft Serve'
+mkfile ./config/README.md '# Hello World\nTest Icy'
 git -C config add -A
 git -C config commit -m 'Initial commit'
 git -C config push origin HEAD
@@ -37,7 +37,7 @@ git -C config push origin HEAD
 ui '"    q"'
 cp stdout home2.txt
 grep 'Config' home2.txt
-grep 'Test Soft Serve' home2.txt
+grep 'Test Icy' home2.txt
 grep 'git clone ssh://localhost:.*/.icy' home2.txt
 
 # test about tab
@@ -45,7 +45,7 @@ ui '"\t      q"'
 cp stdout about2.txt
 grep '• About' about2.txt
 grep 'Hello World' about2.txt
-grep 'Test Soft Serve' about2.txt
+grep 'Test Icy' about2.txt
 
 # stop the server
 [windows] stopserver

@@ -171,7 +171,7 @@ type JobsConfig struct {
 	MirrorPull string `env:"MIRROR_PULL" yaml:"mirror_pull"`
 }
 
-// Config is the configuration for Soft Serve.
+// Config is the configuration for Icy.
 type Config struct {
 	// Name is the name of the server.
 	Name string `env:"NAME" yaml:"name"`
@@ -226,7 +226,7 @@ type Config struct {
 	// already exist. Leave empty to disable.
 	DefaultRepo string `env:"DEFAULT_REPO" yaml:"default_repo"`
 
-	// DataPath is the path to the directory where Soft Serve will store its data.
+	// DataPath is the path to the directory where Icy will store its data.
 	DataPath string `env:"DATA_PATH" yaml:"-"`
 }
 
@@ -416,7 +416,7 @@ func (c *Config) Exist() bool {
 // Use Validate() to validate the config and ensure absolute paths.
 func DefaultConfig() *Config {
 	return &Config{
-		Name: "Soft Serve",
+		Name: "Icy",
 		// DefaultRepo: "",
 		DataPath: DefaultDataPath(),
 		SSH: SSHConfig{
