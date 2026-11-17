@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"charm.land/log/v2"
+	"github.com/skunkwerks/icy/pkg/backend"
 	"github.com/skunkwerks/icy/pkg/config"
+	"github.com/skunkwerks/icy/pkg/utils"
 )
 
 // HTTPServer is an http server.
@@ -35,7 +37,35 @@ func NewHTTPServer(ctx context.Context) (*HTTPServer, error) {
 		},
 	}
 
+	if cfg.Web.Enabled {
+		for _, name := range reservedRepoNames(ctx) {
+			logger.Warn("repository name has a segment the web UI reserves; it works over git and ssh but the web UI will not show it",
+				"repo", name, "reserved", utils.ReservedRepoSegments)
+		}
+	}
+
 	return s, nil
+}
+
+// reservedRepoNames returns the existing repositories whose names have a
+// reserved segment. They were created before the segment was reserved.
+func reservedRepoNames(ctx context.Context) []string {
+	be := backend.FromContext(ctx)
+	if be == nil {
+		return nil
+	}
+	repos, err := be.Repositories(ctx)
+	if err != nil {
+		log.FromContext(ctx).Error("failed to list repositories", "err", err)
+		return nil
+	}
+	var names []string
+	for _, r := range repos {
+		if utils.HasReservedSegment(r.Name()) {
+			names = append(names, r.Name())
+		}
+	}
+	return names
 }
 
 // SetTLSConfig sets the TLS configuration for the HTTP server.
