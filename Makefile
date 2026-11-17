@@ -27,6 +27,11 @@ COMMIT!=	${GIT} rev-parse --short HEAD 2>/dev/null || true
 .if empty(VERSION)
 .error no git version: build from a git checkout, or pass VERSION=... on the command line
 .endif
+# Without tags git describe falls back to a bare hash, which says nothing
+# about the release. Shallow and --no-tags clones have no tags.
+.if empty(VERSION:Mv[0-9]*)
+.error no git tag in version ${VERSION}: run git fetch --tags, or pass VERSION=v... on the command line
+.endif
 .if empty(COMMIT)
 COMMIT=		unknown
 .endif
