@@ -66,6 +66,24 @@ var (
 			return nil
 		},
 	}
+
+	rotateSecretsKeyCmd = &cobra.Command{
+		Use:                "rotate-secrets-key",
+		Short:              "Seal webhook bearer tokens with a new secrets key",
+		Args:               cobra.NoArgs,
+		PersistentPreRunE:  cmd.InitBackendContext,
+		PersistentPostRunE: cmd.CloseDBContext,
+		RunE: func(c *cobra.Command, _ []string) error {
+			ctx := c.Context()
+			be := backend.FromContext(ctx)
+			n, err := be.RotateSecretsKey(ctx)
+			if err != nil {
+				return fmt.Errorf("rotate secrets key: %w", err)
+			}
+			c.Printf("Sealed %d bearer tokens with the new key.\n", n)
+			return nil
+		},
+	}
 )
 
 func init() {
@@ -73,6 +91,7 @@ func init() {
 		exportStateCmd(),
 		checkStateCmd(),
 		syncHooksCmd,
+		rotateSecretsKeyCmd,
 		migrateCmd,
 		rollbackCmd,
 	)
