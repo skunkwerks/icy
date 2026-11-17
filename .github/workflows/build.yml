@@ -60,6 +60,8 @@ jobs:
             uname -a
             pkg install -y go git bash
             cd firecracker-freebsd
+            # the -race build of the testscript binary fails in the VM, so skip -race here
+            export ICY_DISABLE_RACE_CHECKS=1
             go build ./...
             go test ./...
 
@@ -106,7 +108,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v7
         with:
-          go-version: ^1
+          go-version-file: go.mod
           cache: true
       - name: Download Go modules
         run: go mod download
