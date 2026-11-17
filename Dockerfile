@@ -26,4 +26,5 @@ ENTRYPOINT [ "/usr/local/bin/icy", "serve" ]
 
 RUN apk update && apk add --update git bash openssh && rm -rf /var/cache/apk/*
 
-COPY icy /usr/local/bin/icy
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/icy /usr/local/bin/icy
