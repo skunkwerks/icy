@@ -1,0 +1,23 @@
+{{define "content"}}
+<table class="meta commit">
+<tbody>
+<tr><th>commit</th><td><code>{{.Body.ID}}</code> <a href="{{.Body.TreeURL}}">tree</a></td></tr>
+<tr><th>author</th><td>{{.Body.Author}}</td></tr>
+{{if ne .Body.Committer .Body.Author}}<tr><th>committer</th><td>{{.Body.Committer}}</td></tr>{{end}}
+<tr><th>date</th><td><time datetime="{{iso .Body.When}}">{{date .Body.When}}</time></td></tr>
+{{range .Body.Parents}}<tr><th>parent</th><td><a href="{{.URL}}"><code>{{.Short}}</code></a></td></tr>{{end}}
+</tbody>
+</table>
+<pre class="message">{{.Body.Message}}</pre>
+<h2>{{len .Body.Files}} files changed, <span class="add">+{{.Body.Additions}}</span> <span class="del">-{{.Body.Deletions}}</span></h2>
+<ul class="files">
+{{range .Body.Files}}<li><a href="#{{.Anchor}}">{{.Name}}</a> <span class="muted">{{.Status}}</span> <span class="add">+{{.Add}}</span> <span class="del">-{{.Del}}</span></li>
+{{end}}</ul>
+{{range .Body.Files}}
+<section class="diff" id="{{.Anchor}}">
+<h3>{{with .OldName}}{{.}} &rarr; {{end}}{{.Name}}</h3>
+{{if .Binary}}<p class="muted">Binary file.</p>{{else}}<pre>{{range .Lines}}<span{{with .Class}} class="{{.}}"{{end}}>{{.Text}}
+</span>{{end}}</pre>{{end}}
+</section>
+{{end}}
+{{end}}

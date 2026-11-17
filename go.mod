@@ -41,6 +41,7 @@ require (
 	github.com/rogpeppe/go-internal v1.16.0
 	github.com/sergi/go-diff v1.4.0
 	github.com/spf13/cobra v1.10.2
+	github.com/yuin/goldmark v1.8.5
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/crypto v0.57.0
 	golang.org/x/sync v0.23.0
@@ -90,7 +91,6 @@ require (
 	github.com/sahilm/fuzzy v0.1.3 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	github.com/yuin/goldmark v1.8.5 // indirect
 	github.com/yuin/goldmark-emoji v1.0.6 // indirect
 	golang.org/x/exp v0.0.0-20260727155853-b88d891fe743 // indirect
 	golang.org/x/net v0.60.0 // indirect

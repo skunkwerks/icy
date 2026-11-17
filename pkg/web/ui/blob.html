@@ -1,0 +1,11 @@
+{{define "content"}}
+<nav class="path">{{range $i, $c := .Body.Crumbs}}{{if $i}} / {{end}}<a href="{{$c.URL}}">{{$c.Name}}</a>{{end}}</nav>
+<p class="meta">{{.Body.Size}} <a href="{{.Body.RawURL}}">raw</a></p>
+{{if .Body.TooLarge}}
+<p class="muted">This file is too large to show here. Use the raw link.</p>
+{{else if .Body.Binary}}
+<p class="muted">This is a binary file. Use the raw link to download it.</p>
+{{else}}
+<div class="code">{{.Body.Code}}</div>
+{{end}}
+{{end}}

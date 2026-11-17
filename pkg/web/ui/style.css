@@ -1,0 +1,126 @@
+:root {
+  --fg: #1f2328;
+  --bg: #ffffff;
+  --muted: #656d76;
+  --line: #d0d7de;
+  --soft: #f6f8fa;
+  --link: #0550ae;
+  --add: #116329;
+  --add-bg: #dafbe1;
+  --del: #82071e;
+  --del-bg: #ffebe9;
+  --hunk: #6639ba;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e6edf3;
+    --bg: #0d1117;
+    --muted: #8d96a0;
+    --line: #30363d;
+    --soft: #161b22;
+    --link: #58a6ff;
+    --add: #7ee787;
+    --add-bg: #12261e;
+    --del: #ffa198;
+    --del-bg: #25171c;
+    --hunk: #d2a8ff;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto;
+  max-width: 72rem;
+  padding: 0 1rem 2rem;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  overflow-wrap: anywhere;
+}
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre { overflow-x: auto; }
+h1 { font-size: 1.5rem; margin: 1rem 0 .25rem; }
+h2 { font-size: 1.1rem; margin: 1.5rem 0 .5rem; }
+h3 { font-size: 1rem; margin: 0; padding: .4rem .6rem; background: var(--soft); border-bottom: 1px solid var(--line); }
+.muted { color: var(--muted); }
+.nowrap { white-space: nowrap; }
+.badge {
+  font-size: .75rem;
+  padding: 0 .4rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  color: var(--muted);
+  vertical-align: middle;
+}
+header.top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: .75rem 0;
+  border-bottom: 1px solid var(--line);
+}
+header.top .site { font-weight: 600; }
+header.top .sep { color: var(--muted); }
+.who { display: flex; gap: .5rem; align-items: center; color: var(--muted); }
+.who form { margin: 0; }
+button {
+  font: inherit;
+  font-size: .85rem;
+  color: var(--fg);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: .3rem;
+  padding: .1rem .5rem;
+  cursor: pointer;
+}
+nav.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem 1rem;
+  align-items: baseline;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+nav.tabs a.on { font-weight: 600; color: var(--fg); }
+nav.tabs .rev { color: var(--muted); margin-left: auto; }
+nav.path { margin: 1rem 0 .5rem; font-weight: 600; }
+.intro p { margin: .25rem 0; }
+table { border-collapse: collapse; width: 100%; }
+table.list td, table.list th { padding: .3rem .6rem .3rem 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.list th { font-weight: 600; color: var(--muted); }
+table.tree td.mode { color: var(--muted); width: 1%; }
+table.tree td.size { color: var(--muted); text-align: right; width: 1%; }
+table.meta th { text-align: left; color: var(--muted); font-weight: normal; padding-right: 1rem; width: 1%; }
+dl.clone { display: grid; grid-template-columns: max-content 1fr; gap: .25rem .75rem; margin: 1rem 0; }
+dl.clone dt { color: var(--muted); }
+dl.clone dd { margin: 0; overflow-x: auto; }
+p.meta { color: var(--muted); }
+p.meta a { margin-left: .75rem; }
+.code, .diff, .readme { border: 1px solid var(--line); border-radius: .4rem; margin: .5rem 0 1rem; overflow: hidden; }
+.code pre, .diff pre { margin: 0; padding: .5rem .6rem; }
+.chroma .ln { user-select: none; padding-right: 1rem; }
+.chroma .ln a { color: var(--muted); }
+.readme { padding: 0 1rem; }
+.readme h2.muted { font-size: .85rem; font-weight: normal; margin: .5rem 0; }
+.readme pre { background: var(--soft); padding: .6rem; border-radius: .3rem; }
+.readme img { max-width: 100%; }
+.readme table td, .readme table th { border: 1px solid var(--line); padding: .25rem .5rem; }
+pre.message { white-space: pre-wrap; padding: .75rem; background: var(--soft); border-radius: .4rem; }
+ul.files { padding-left: 1.25rem; }
+.add { color: var(--add); }
+.del { color: var(--del); }
+.diff pre span.add { display: block; background: var(--add-bg); }
+.diff pre span.del { display: block; background: var(--del-bg); }
+.diff pre span.hunk { display: block; color: var(--hunk); }
+nav.pager { display: flex; gap: 1rem; margin: 1rem 0; }
+footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
+@media (max-width: 40rem) {
+  body { padding: 0 .6rem 1.5rem; }
+  .wide { display: none; }
+  table.tree td.mode { display: none; }
+}

@@ -1,0 +1,33 @@
+{{define "layout"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>{{with .Title}}{{.}} - {{end}}{{with .Repo}}{{.Name}} - {{end}}{{.Site.Name}}</title>
+<link rel="stylesheet" href="/~/style.css?v={{.Site.CSSVersion}}">
+</head>
+<body>
+<header class="top">
+<nav class="crumbs"><a class="site" href="/">{{.Site.Name}}</a>{{with .Repo}} <span class="sep">/</span> <a href="{{repoURL .Name}}">{{.Name}}</a>{{if ne .Visibility "public"}} <span class="badge">{{.Visibility}}</span>{{end}}{{if .Mirror}} <span class="badge">mirror</span>{{end}}{{end}}</nav>
+<div class="who">{{if .User}}<span>{{.User}}</span> <form method="post" action="/~/logout"><button type="submit">Sign out</button></form>{{end}}</div>
+</header>
+{{with .Repo}}
+<nav class="tabs">
+<a href="{{.TabURL "summary"}}"{{if eq $.Tab "summary"}} class="on"{{end}}>summary</a>
+<a href="{{.TabURL "tree"}}"{{if eq $.Tab "tree"}} class="on"{{end}}>tree</a>
+<a href="{{.TabURL "log"}}"{{if eq $.Tab "log"}} class="on"{{end}}>log</a>
+<a href="{{.TabURL "refs"}}"{{if eq $.Tab "refs"}} class="on"{{end}}>refs</a>
+{{with .Rev}}<span class="rev">at <code>{{.}}</code></span>{{end}}
+</nav>
+{{end}}
+<main>
+{{template "content" .}}
+</main>
+<footer>
+{{if not .User}}<p>Sign in with <code>{{.Site.LoginCmd}}</code></p>{{end}}
+</footer>
+</body>
+</html>
+{{end}}

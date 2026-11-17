@@ -1,0 +1,17 @@
+{{define "content"}}
+{{with .Body.Commits}}
+<table class="list">
+<tbody>
+{{range .}}<tr>
+<td class="nowrap"><a href="{{.URL}}"><code>{{.Short}}</code></a></td>
+<td>{{.Summary}}</td>
+<td class="wide">{{.Author}}</td>
+<td class="nowrap"><time datetime="{{iso .When}}">{{ago .When}}</time></td>
+</tr>
+{{end}}</tbody>
+</table>
+{{else}}
+<p class="muted">No commits.</p>
+{{end}}
+<nav class="pager">{{with .Body.PrevURL}}<a href="{{.}}">newer</a>{{end}} {{with .Body.NextURL}}<a href="{{.}}">older</a>{{end}}</nav>
+{{end}}

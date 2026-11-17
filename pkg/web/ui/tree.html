@@ -1,0 +1,16 @@
+{{define "content"}}
+<nav class="path">{{range $i, $c := .Body.Crumbs}}{{if $i}} / {{end}}<a href="{{$c.URL}}">{{$c.Name}}</a>{{end}}</nav>
+{{with .Body.Entries}}
+<table class="list tree">
+<tbody>
+{{range .}}<tr>
+<td class="mode nowrap"><code>{{.Mode}}</code></td>
+<td>{{if .URL}}<a href="{{.URL}}">{{.Name}}{{if .IsDir}}/{{end}}</a>{{else}}{{.Name}}{{end}}{{if .IsLink}} <span class="muted">(symlink)</span>{{end}}</td>
+<td class="size nowrap">{{.Size}}</td>
+</tr>
+{{end}}</tbody>
+</table>
+{{else}}
+<p class="muted">This directory is empty.</p>
+{{end}}
+{{end}}

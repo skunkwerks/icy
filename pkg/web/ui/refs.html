@@ -1,0 +1,26 @@
+{{define "content"}}
+<h2>Branches</h2>
+{{with .Body.Branches}}
+<table class="list">
+<tbody>
+{{range .}}<tr>
+<td><a href="{{.TreeURL}}">{{.Name}}</a>{{if .IsHead}} <span class="badge">default</span>{{end}}</td>
+<td class="nowrap"><code>{{.Short}}</code></td>
+<td class="nowrap"><a href="{{.LogURL}}">log</a></td>
+</tr>
+{{end}}</tbody>
+</table>
+{{else}}<p class="muted">No branches.</p>{{end}}
+<h2>Tags</h2>
+{{with .Body.Tags}}
+<table class="list">
+<tbody>
+{{range .}}<tr>
+<td><a href="{{.TreeURL}}">{{.Name}}</a></td>
+<td class="nowrap"><code>{{.Short}}</code></td>
+<td class="nowrap"><a href="{{.LogURL}}">log</a></td>
+</tr>
+{{end}}</tbody>
+</table>
+{{else}}<p class="muted">No tags.</p>{{end}}
+{{end}}

@@ -1,0 +1,32 @@
+{{define "content"}}
+<section class="intro">
+<h1>{{with .Repo.ProjectName}}{{.}}{{else}}{{.Repo.Name}}{{end}}</h1>
+{{with .Repo.Description}}<p>{{.}}</p>{{end}}
+</section>
+<dl class="clone">
+<dt>https</dt><dd><code>git clone {{.Repo.HTTPURL}}</code></dd>
+{{with .Repo.SSHURL}}<dt>ssh</dt><dd><code>git clone {{.}}</code></dd>{{end}}
+</dl>
+{{if .Body.Empty}}
+<p class="muted">This repository is empty.</p>
+{{else}}
+<h2>Latest commits{{with .Body.Branch}} on <code>{{.}}</code>{{end}}</h2>
+<table class="list">
+<tbody>
+{{range .Body.Commits}}<tr>
+<td class="nowrap"><a href="{{.URL}}"><code>{{.Short}}</code></a></td>
+<td>{{.Summary}}</td>
+<td class="wide">{{.Author}}</td>
+<td class="nowrap"><time datetime="{{iso .When}}">{{ago .When}}</time></td>
+</tr>
+{{end}}</tbody>
+</table>
+<p><a href="{{.Body.LogURL}}">Full log</a></p>
+{{with .Body.Readme}}
+<article class="readme">
+<h2 class="muted">{{$.Body.ReadmeName}}</h2>
+{{.}}
+</article>
+{{end}}
+{{end}}
+{{end}}
