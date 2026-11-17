@@ -582,11 +582,11 @@ Repositories can be nested too:
 
 ```sh
 # Create a new nested repository
-ssh -p 23231 localhost repo create charmbracelet/icecream
+ssh -p 23231 localhost repo create skunkwerks/icecream
 
 # Or ...
-git remote add charm ssh://localhost:23231/charmbracelet/icecream
-git push charm main
+git remote add icy ssh://localhost:23231/skunkwerks/icecream
+git push icy main
 ```
 
 ### Mirrors
