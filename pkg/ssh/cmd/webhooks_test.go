@@ -45,7 +45,7 @@ func TestWebhookDeliveriesAreScopedToRepository(t *testing.T) {
 
 	const (
 		secretBody      = "private-repo-payload"
-		secretSignature = "X-SoftServe-Signature: sha256=leaked-signature\n"
+		secretSignature = "X-Icy-Signature: sha256=leaked-signature\n"
 	)
 	deliveryID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	is.NoErr(store.FromContext(ctx).CreateWebhookDelivery(

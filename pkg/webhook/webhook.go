@@ -81,21 +81,21 @@ func SendWebhook(ctx context.Context, w models.Webhook, event Event, payload int
 
 	headers := http.Header{}
 	headers.Add("Content-Type", contentType.String())
-	headers.Add("User-Agent", "SoftServe/"+version.Version)
-	headers.Add("X-SoftServe-Event", event.String())
+	headers.Add("User-Agent", "Icy/"+version.Version)
+	headers.Add("X-Icy-Event", event.String())
 
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return err
 	}
 
-	headers.Add("X-SoftServe-Delivery", id.String())
+	headers.Add("X-Icy-Delivery", id.String())
 
 	reqBody := buf.String()
 	if w.Secret != "" {
 		sig := hmac.New(sha256.New, []byte(w.Secret))
 		sig.Write([]byte(reqBody)) //nolint: errcheck
-		headers.Add("X-SoftServe-Signature", "sha256="+hex.EncodeToString(sig.Sum(nil)))
+		headers.Add("X-Icy-Signature", "sha256="+hex.EncodeToString(sig.Sum(nil)))
 	}
 
 	res, reqErr := do(ctx, w.URL, http.MethodPost, headers, &buf)
