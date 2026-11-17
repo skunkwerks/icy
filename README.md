@@ -4,21 +4,7 @@ Icy is a fork of [Soft Serve](https://github.com/charmbracelet/soft-serve).
 Charm has sunset Soft Serve. Thank you to Charm and to everyone who
 contributed to it over the years.
 
-<p>
-    <img style="width: 451px" src="https://stuff.charm.sh/icy/icy-header.png?0" alt="A nice rendering of some melting ice cream with the words ‘Charm Icy’ next to it"><br>
-    <a href="https://github.com/skunkwerks/icy/releases"><img src="https://img.shields.io/github/release/skunkwerks/icy.svg" alt="Latest Release"></a>
-    <a href="https://pkg.go.dev/github.com/skunkwerks/icy?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
-    <a href="https://github.com/skunkwerks/icy/actions"><img src="https://github.com/skunkwerks/icy/workflows/build/badge.svg" alt="Build Status"></a>
-    <a href="https://nightly.link/skunkwerks/icy/workflows/nightly/main"><img src="https://shields.io/badge/-Nightly%20Builds-orange?logo=hackthebox&logoColor=fff&style=appveyor"/></a>
-</p>
-
 A tasty, self-hostable Git server for the command line. 🍦
-
-<picture>
-  <source media="(max-width: 750px)" srcset="https://github.com/skunkwerks/icy/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2">
-  <source media="(min-width: 750px)" width="750" srcset="https://github.com/skunkwerks/icy/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2">
-  <img src="https://github.com/skunkwerks/icy/assets/42545625/c754c746-dc4c-44a6-9c39-28649264cbf2" alt="Icy screencast">
-</picture>
 
 - Easy to navigate TUI available over SSH
 - Clone repos over SSH, HTTP, or Git protocol
