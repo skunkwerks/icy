@@ -249,6 +249,11 @@ func checkIfServerAdmin(cmd *cobra.Command, _ []string) error {
 // whether the name is taken: with one flat namespace, "already exists" is
 // the answer either way.
 func checkIfRepoCollab(cmd *cobra.Command, args []string) error {
+	// A reserved name is refused for everyone, before anything that
+	// depends on whether the name is taken.
+	if name := repoArg(args); utils.HasReservedSegment(name) {
+		return utils.ValidateNewRepo(name)
+	}
 	if repoAccessLevel(cmd.Context(), repoArg(args)) < access.ReadWriteAccess {
 		return proto.ErrUnauthorized
 	}

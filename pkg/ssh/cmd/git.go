@@ -251,6 +251,13 @@ func gitRunE(cmd *cobra.Command, args []string) error {
 		defer func() {
 			receivePackSeconds.WithLabelValues(name).Add(time.Since(start).Seconds())
 		}()
+		// A push may not create a name with a reserved segment. This is
+		// decided from the name alone, before the access level, which
+		// differs between a missing name and an existing private one.
+		if repo == nil && utils.HasReservedSegment(name) {
+			return utils.ValidateNewRepo(name)
+		}
+
 		// A missing name is created for a caller who may write; anything
 		// else goes through the same check as every other service.
 		created := repo == nil && accessLevel >= access.ReadWriteAccess
