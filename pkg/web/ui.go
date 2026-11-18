@@ -34,6 +34,7 @@ import (
 //
 //	GET  /                            front page: server info and listed repos
 //	GET  /-/style.css                 stylesheet
+//	GET  /-/favicon.svg               icons, also favicon.ico and apple-touch-icon.png
 //	GET  /-/login?token=T             swap a sign-in token for a session cookie
 //	POST /-/logout                    end the session
 //	GET  /{repo}                      summary, README and clone URLs
@@ -189,11 +190,13 @@ func (ui *webUI) serveGlobal(w http.ResponseWriter, r *http.Request, segment, pa
 	switch {
 	case page == "style.css" && isRead(r):
 		ui.style(w, r)
+	case brandFiles[page] != "" && isRead(r):
+		ui.brand(w, r, page)
 	case page == "login" && isRead(r):
 		ui.login(w, r)
 	case page == "logout" && r.Method == http.MethodPost:
 		ui.logout(w, r)
-	case page == "style.css" || page == "login" || page == "logout":
+	case page == "style.css" || page == "login" || page == "logout" || brandFiles[page] != "":
 		ui.renderError(w, r, http.StatusMethodNotAllowed, "This page does not answer that request method.")
 	default:
 		ui.renderNotFound(w, r)
@@ -239,6 +242,25 @@ func (ui *webUI) style(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=300")
 	}
 	w.Write(ui.css) //nolint:errcheck
+}
+
+// brandFiles are the icons under ui/brand and their content types. They
+// are built by branding/build_brand.
+var brandFiles = map[string]string{
+	"favicon.svg":          "image/svg+xml",
+	"favicon.ico":          "image/x-icon",
+	"apple-touch-icon.png": "image/png",
+}
+
+// brand serves one of the icons.
+func (ui *webUI) brand(w http.ResponseWriter, _ *http.Request, name string) {
+	data, err := fs.ReadFile(uiFS, "ui/brand/"+name)
+	if err != nil {
+		panic(err)
+	}
+	w.Header().Set("Content-Type", brandFiles[name])
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write(data) //nolint:errcheck
 }
 
 // siteInfo is the server information every page shows.

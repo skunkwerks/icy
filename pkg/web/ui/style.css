@@ -65,6 +65,7 @@ header.top {
   border-bottom: 1px solid var(--line);
 }
 header.top .site { font-weight: 600; }
+header.top .site img { vertical-align: text-bottom; margin-right: .4rem; }
 header.top .sep { color: var(--muted); }
 header.top .version { color: var(--muted); font-size: .85rem; }
 .who { display: flex; gap: .5rem; align-items: center; color: var(--muted); }

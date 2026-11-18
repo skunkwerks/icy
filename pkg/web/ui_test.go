@@ -226,6 +226,16 @@ func TestUIHome(t *testing.T) {
 
 	is.Equal(f.get("/-/style.css", nil).Code, http.StatusOK)
 	is.True(strings.Contains(f.get("/-/style.css", nil).Body.String(), ".chroma"))
+
+	// The icons the layout links to are served, with their types.
+	is.True(strings.Contains(f.get("/", nil).Body.String(), `href="/-/favicon.svg"`))
+	for name, ctype := range brandFiles {
+		w := f.get("/-/"+name, nil)
+		is.Equal(w.Code, http.StatusOK)
+		is.Equal(w.Header().Get("Content-Type"), ctype)
+		is.True(w.Body.Len() > 0)
+		is.Equal(f.do(http.MethodPost, "/-/"+name, nil).Code, http.StatusMethodNotAllowed)
+	}
 }
 
 func TestUIPages(t *testing.T) {
@@ -379,7 +389,7 @@ func TestUIDisabled(t *testing.T) {
 	f.cfg.Web.Enabled = false
 	h := NewRouter(f.ctx)
 
-	for _, p := range []string{"/", "/pub", "/pub/tree", "/-/style.css"} {
+	for _, p := range []string{"/", "/pub", "/pub/tree", "/-/style.css", "/-/favicon.svg"} {
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, httptest.NewRequestWithContext(context.Background(), http.MethodGet, p, nil))
 		is.Equal(w.Code, http.StatusNotFound)
