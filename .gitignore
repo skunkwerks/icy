@@ -8,3 +8,4 @@ completions/
 manpages/
 icy_ed25519*
 /icy.tar
+!/branding/dist

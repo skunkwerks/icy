@@ -1,0 +1,244 @@
+#!/usr/libexec/flua
+-- icy brand asset builder.
+--
+-- logo.svg and name.svg are the source of truth. logo.svg is the four
+-- icicles alone. name.svg adds the word "icy" as a <text> element in the
+-- Young Serif font, and the builder outlines it to paths with usvg so the
+-- shipped SVGs and PNGs need no font at runtime.
+--
+-- The icicle colours and the wordmark ink come from the two SVGs. Every
+-- other colour is taken from the web UI stylesheet, pkg/web/ui/style.css.
+--
+-- Requirements: flua (FreeBSD: /usr/libexec/flua), `resvg` and `usvg` on PATH
+-- (FreeBSD: pkg install resvg). Font: Young Serif, whose folder is set in
+-- FONTS below.
+--
+--     ./build_brand    # builds into ./dist, installs the web UI icons
+--
+-- Output layout:
+--     dist/icy-logo.svg, dist/icy-logo-name.svg, dist/icy-logo-name-dark.svg
+--     dist/png/        icy-logo-{16..1024}.png, icy-logo-name-{64..512}.png,
+--                      icy-logo-name-dark-{64..512}.png,
+--                      opaque light/dark 512 renders
+--     dist/favicon/    favicon.ico, favicon.svg, icon-192/512.png,
+--                      apple-touch-icon.png, site.webmanifest, head.html
+--     ../pkg/web/ui/brand/   favicon.ico, favicon.svg, apple-touch-icon.png,
+--                            embedded in the icy binary
+
+-- Wordmark ink, as written in name.svg.
+local INK = "#17262e"
+-- From pkg/web/ui/style.css: --bg in light and dark, and --fg in dark.
+local LIGHT_BG = "#ffffff"
+local DARK_BG  = "#0d1117"
+local DARK_FG  = "#e6edf3"
+
+local HERE = arg[0]:match("^(.*)/[^/]+$") or "."
+local OUT  = HERE .. "/dist"
+local SRC  = HERE
+local WEB  = HERE .. "/../pkg/web/ui/brand"
+-- Young Serif variable font. Override by editing this path.
+local FONTS = "/usr/local/share/fonts/YoungSerif"
+
+-- ------------------------------------------------------------------- sys ---
+local function mkdir_p(dir)
+  os.execute("mkdir -p " .. string.format("%q", dir))
+end
+
+local function write_file(path, content)
+  local dir = path:match("^(.*)/[^/]+$")
+  if dir then mkdir_p(dir) end
+  local f, err = io.open(path, "wb")
+  if not f then
+    io.stderr:write("cannot write " .. path .. ": " .. tostring(err) .. "\n")
+    os.exit(1)
+  end
+  f:write(content)
+  f:close()
+end
+
+local function read_file(path)
+  local f, err = io.open(path, "rb")
+  if not f then
+    io.stderr:write("cannot read " .. path .. ": " .. tostring(err) .. "\n")
+    os.exit(1)
+  end
+  local data = f:read("*a")
+  f:close()
+  return data
+end
+
+local function cp(src, dst)
+  write_file(dst, read_file(src))
+end
+
+-- Run a command line (already a list of args); print and die on failure.
+local function run(args)
+  local quoted = {}
+  for i, a in ipairs(args) do
+    quoted[i] = string.format("%q", a)
+  end
+  local cmd = table.concat(quoted, " ")
+  local ok, why, code = os.execute(cmd)
+  if ok ~= true or (why == "exit" and code ~= 0) then
+    io.stderr:write("command failed: " .. cmd .. "\n")
+    os.exit(1)
+  end
+end
+
+-- Write content to a temporary .svg, hand its path to fn, then remove it.
+local function with_tmp_svg(content, fn)
+  local base = os.tmpname()
+  local path = base .. ".svg"
+  write_file(path, content)
+  fn(path)
+  os.remove(path)
+  os.remove(base)
+end
+
+-- resvg/usvg share the Young Serif font-dir args.
+local FONT_ARGS = { "--use-fonts-dir", FONTS, "--skip-system-fonts" }
+
+local function outline(src, dst)
+  if dst:match("^.*/") then mkdir_p(dst:match("^(.*)/[^/]+$")) end
+  run({ "usvg", FONT_ARGS[1], FONT_ARGS[2], FONT_ARGS[3], src, dst })
+end
+
+-- Render SVG to PNG. opts: width, height (px), background (colour).
+local function png(svg, dst, opts)
+  if dst:match("^.*/") then mkdir_p(dst:match("^(.*)/[^/]+$")) end
+  local cmd = { "resvg", FONT_ARGS[1], FONT_ARGS[2], FONT_ARGS[3] }
+  if opts.width then cmd[#cmd + 1] = "-w"; cmd[#cmd + 1] = tostring(opts.width) end
+  if opts.height then cmd[#cmd + 1] = "-h"; cmd[#cmd + 1] = tostring(opts.height) end
+  if opts.background then cmd[#cmd + 1] = "--background"; cmd[#cmd + 1] = opts.background end
+  cmd[#cmd + 1] = svg
+  cmd[#cmd + 1] = dst
+  run(cmd)
+end
+
+-- Pack PNGs into a .ico (PNG-in-ICO, supported everywhere since Vista).
+local function write_ico(images, path)
+  local n = #images
+  local header = string.pack("<HHH", 0, 1, n)
+  local offset = 6 + 16 * n
+  local entries, blobs = {}, {}
+  for _, img in ipairs(images) do
+    local size, data = img[1], img[2]
+    local dim = size >= 256 and 0 or size
+    entries[#entries + 1] = string.pack("<BBBBHHII", dim, dim, 0, 0, 1, 32, #data, offset)
+    blobs[#blobs + 1] = data
+    offset = offset + #data
+  end
+  write_file(path, header .. table.concat(entries) .. table.concat(blobs))
+end
+
+-- -------------------------------------------------------------- build ---
+local function build()
+  mkdir_p(OUT .. "/png")
+  mkdir_p(OUT .. "/favicon")
+
+  -- 1. SVGs. logo.svg is the icicles alone, already shapes. name.svg has a
+  --    <text> word, outline it so the shipped SVG is font-independent. The
+  --    dark variant swaps the wordmark ink for the web UI's dark-theme text
+  --    colour, the icicles stay as they are.
+  local logo = OUT .. "/icy-logo.svg"
+  local name = OUT .. "/icy-logo-name.svg"
+  local name_dark = OUT .. "/icy-logo-name-dark.svg"
+  cp(SRC .. "/logo.svg", logo)
+  outline(SRC .. "/name.svg", name)
+
+  local dark, swapped = read_file(SRC .. "/name.svg"):gsub(INK, DARK_FG)
+  if swapped ~= 1 then
+    io.stderr:write("expected one " .. INK .. " in name.svg, found " .. swapped .. "\n")
+    os.exit(1)
+  end
+  with_tmp_svg(dark, function(path) outline(path, name_dark) end)
+
+  -- 2. PNGs.
+  for _, s in ipairs({ 16, 32, 48, 64, 128, 256, 512, 1024 }) do
+    png(logo, OUT .. "/png/icy-logo-" .. s .. ".png", { width = s, height = s })
+  end
+  for _, h in ipairs({ 64, 128, 256, 512 }) do
+    png(name, OUT .. "/png/icy-logo-name-" .. h .. ".png", { height = h })
+    png(name_dark, OUT .. "/png/icy-logo-name-dark-" .. h .. ".png", { height = h })
+  end
+  png(logo, OUT .. "/png/icy-logo-opaque-light-512.png",
+    { width = 512, height = 512, background = LIGHT_BG })
+  png(logo, OUT .. "/png/icy-logo-opaque-dark-512.png",
+    { width = 512, height = 512, background = DARK_BG })
+  png(name, OUT .. "/png/icy-logo-name-opaque-light-512.png",
+    { height = 512, background = LIGHT_BG })
+  png(name_dark, OUT .. "/png/icy-logo-name-opaque-dark-512.png",
+    { height = 512, background = DARK_BG })
+
+  -- 3. favicons.
+  cp(logo, OUT .. "/favicon/favicon.svg")
+  png(logo, OUT .. "/favicon/icon-192.png", { width = 192, height = 192 })
+  png(logo, OUT .. "/favicon/icon-512.png", { width = 512, height = 512 })
+
+  -- apple-touch-icon: opaque background, logo padded to 140 of 180 px. resvg's
+  -- --background fills edge-to-edge, so the padding needs its own 180x180
+  -- wrapper with logo.svg nested inside it.
+  local inner, nested = read_file(SRC .. "/logo.svg"):gsub("<svg ", '<svg x="20" y="20" width="140" height="140" ', 1)
+  if nested ~= 1 then
+    io.stderr:write("logo.svg does not start with an <svg> element\n")
+    os.exit(1)
+  end
+  local apple = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">\n'
+    .. '<rect width="180" height="180" fill="' .. DARK_BG .. '"/>\n'
+    .. inner
+    .. '</svg>\n'
+  with_tmp_svg(apple, function(path)
+    png(path, OUT .. "/favicon/apple-touch-icon.png", { width = 180, height = 180 })
+  end)
+
+  local ico_parts = {}
+  for _, s in ipairs({ 16, 32, 48 }) do
+    ico_parts[#ico_parts + 1] = { s, read_file(OUT .. "/png/icy-logo-" .. s .. ".png") }
+  end
+  write_ico(ico_parts, OUT .. "/favicon/favicon.ico")
+
+  -- 4. web manifest + head snippet.
+  write_file(OUT .. "/favicon/site.webmanifest",
+    '{\n'
+    .. '  "name": "icy",\n'
+    .. '  "icons": [\n'
+    .. '    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },\n'
+    .. '    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }\n'
+    .. '  ],\n'
+    .. '  "theme_color": "' .. DARK_BG .. '",\n'
+    .. '  "background_color": "' .. DARK_BG .. '"\n'
+    .. '}\n')
+
+  write_file(OUT .. "/favicon/head.html", [==[
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+]==])
+
+  -- 5. the icons the web UI serves under /-/, embedded in the binary.
+  for _, f in ipairs({ "favicon.ico", "favicon.svg", "apple-touch-icon.png" }) do
+    cp(OUT .. "/favicon/" .. f, WEB .. "/" .. f)
+  end
+end
+
+-- -------------------------------------------------------------- main ---
+for _, t in ipairs({ "resvg", "usvg" }) do
+  local f = io.popen("command -v " .. string.format("%q", t) .. " 2>/dev/null")
+  if not f:read("*a"):find("%S") then
+    io.stderr:write("error: " .. t .. " not found on PATH (FreeBSD: pkg install resvg)\n")
+    os.exit(1)
+  end
+  f:close()
+end
+for _, name in ipairs({ "logo.svg", "name.svg" }) do
+  local f = io.open(SRC .. "/" .. name, "rb")
+  if not f then
+    io.stderr:write("missing " .. SRC .. "/" .. name .. "\n")
+    os.exit(1)
+  end
+  f:close()
+end
+
+build()
+print("done \226\134\146 " .. OUT)

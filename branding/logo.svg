@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -29 216 216">
+  <title>icy</title>
+  <g fill="currentColor" stroke="currentColor"
+     stroke-width="16" stroke-linejoin="round">
+    <polygon color="#5bc0eb" points="0,8 32,8 16,110"/>
+    <polygon color="#4a7bd0" points="56,8 88,8 72,150"/>
+    <polygon color="#7a5bd0" points="112,8 144,8 128,80"/>
+    <polygon color="#2ec4b6" points="168,8 200,8 184,125"/>
+  </g>
+</svg>
