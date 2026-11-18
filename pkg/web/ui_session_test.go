@@ -86,6 +86,15 @@ func TestUILogout(t *testing.T) {
 	is.Equal(w.Code, http.StatusForbidden)
 	is.Equal(f.get("/secret", c).Code, http.StatusOK)
 
+	// Neither can one that hides its origin, such as a sandboxed frame.
+	w = f.do(http.MethodPost, "/-/logout", c, "Origin", "null")
+	is.Equal(w.Code, http.StatusForbidden)
+	w = f.do(http.MethodPost, "/-/logout", c, "Origin", "null", "Sec-Fetch-Site", "cross-site")
+	is.Equal(w.Code, http.StatusForbidden)
+	w = f.do(http.MethodPost, "/-/logout", c, "Origin", "http://localhost:23232", "Sec-Fetch-Site", "same-site")
+	is.Equal(w.Code, http.StatusForbidden)
+	is.Equal(f.get("/secret", c).Code, http.StatusOK)
+
 	// Signing out needs POST.
 	is.Equal(f.get("/-/logout", c).Code, http.StatusMethodNotAllowed)
 
@@ -98,6 +107,14 @@ func TestUILogout(t *testing.T) {
 	// The old cookie value no longer works, even if the browser kept it.
 	is.Equal(f.get("/secret", c).Code, http.StatusNotFound)
 	is.True(!strings.Contains(f.get("/", c).Body.String(), "Sign out"))
+
+	// Our own pages are served with Referrer-Policy: no-referrer, which
+	// makes the browser send "Origin: null" on the sign out form. The
+	// fetch metadata still says the post came from this site.
+	c = f.login(t, f.owner)
+	w = f.do(http.MethodPost, "/-/logout", c, "Origin", "null", "Sec-Fetch-Site", "same-origin")
+	is.Equal(w.Code, http.StatusSeeOther)
+	is.Equal(f.get("/secret", c).Code, http.StatusNotFound)
 }
 
 // TestUISessionTokenIsNotABearerToken checks a session cookie value cannot

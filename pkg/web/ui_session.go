@@ -188,10 +188,18 @@ func (ui *webUI) login(w http.ResponseWriter, r *http.Request) {
 }
 
 // sameOrigin reports whether a state-changing request came from this site.
-// Requests without an Origin header, such as from older browsers or curl,
-// are allowed: the session cookie is SameSite=Lax, so a cross-site form
-// post does not carry it anyway.
+//
+// Sec-Fetch-Site is trusted first when the browser sends it. Origin alone
+// is not enough: our pages set Referrer-Policy: no-referrer, which makes
+// browsers send "Origin: null" on same-origin form posts.
+//
+// Requests with neither header, such as from older browsers or curl, are
+// allowed: the session cookie is SameSite=Lax, so a cross-site form post
+// does not carry it anyway.
 func sameOrigin(r *http.Request) bool {
+	if site := r.Header.Get("Sec-Fetch-Site"); site != "" {
+		return site == "same-origin"
+	}
 	origin := r.Header.Get("Origin")
 	if origin == "" {
 		return true
